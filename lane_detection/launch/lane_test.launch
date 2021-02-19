@@ -1,0 +1,5 @@
+<launch>
+    <node pkg="lane_detection" type="lane_test_node" name="lane_test_node">
+        <param name="test_select" type="int" value="1"/>
+    </node>
+</launch>

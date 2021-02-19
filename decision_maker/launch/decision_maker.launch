@@ -1,0 +1,14 @@
+<launch>
+    <node pkg="decision_maker" type="decision_maker_node" name="decision_maker_node">
+	<param name="p_gain" type="double" value="0.6"/>
+        <param name="i_gain" type="double" value="0.005"/>
+        <param name="d_gain" type="double" value="2"/>
+	<param name="steer_offset" type="double" value="0.05"/>
+	<param name="target_velocity" type="double" value="0.8"/>
+	<param name="trajectory_param_a" type="double" value="1"/>
+	<param name="trajectory_param_b" type="double" value="1"/>
+	<param name="trajectory_param_c" type="double" value="1.7"/>
+	<param name="run" type="bool" value="false"/>
+	<param name="start_lane" type="string" value="left"/>
+    </node>
+</launch>

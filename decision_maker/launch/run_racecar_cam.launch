@@ -1,0 +1,6 @@
+<launch>
+    <include file="$(find usb_cam)/launch/video.launch"/>
+    <include file="$(find lane_detection)/launch/lane_detection.launch"/>
+    <include file="$(find decision_maker)/launch/decision_maker.launch"/>
+    <include file="$(find controller)/launch/controller.launch"/>
+</launch>
