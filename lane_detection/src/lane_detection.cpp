@@ -5,221 +5,260 @@
 
 #include "lane_detection/lane_detection.h"
 
-const int row__ = 480;
-const int col__ = 864;
-const int left_high = 235;
-const int left_low = 105;
+constexpr int row__ = 480;
+constexpr int col__ = 864;
+constexpr int left_high = 230;
+constexpr int left_low = 100;
 
 LaneDetection::LaneDetection(ros::NodeHandle & nh, ros::NodeHandle & pnh)
     :srcTri({Point2f(left_high, 0), Point2f(col__ - left_high, 0), Point2f(left_low, row__), Point2f(col__ - left_low, row__)}) // before perspective transform
     ,dstTri({Point2f(left_high, 0), Point2f(col__ - left_high, 0), Point2f(left_high, row__), Point2f(col__ - left_high, row__)})// after perspective transform
 {
     subCompImg = nh.subscribe("usb_cam/image_raw/compressed", 1, &LaneDetection::imgCallback, this);
-    pubPoint = nh.advertise<geometry_msgs::Point>("/waypoint", 1);
+    pubTargetSteer = nh.advertise<std_msgs::Float64>("/target_steer", 1);
+    pubOnLane = nh.advertise<std_msgs::String>("/on_lane", 1);
     namedWindow("src", WINDOW_AUTOSIZE);
 
     // save image
-    pnh.param<bool>("save_last_img", save_last_image, false);
+    pnh.param<bool>("save_last_img", bSaveLastImage, false);
 
     // get color ny HSV
-    pnh.param<int>("hue_1_max", hue_1_max, 10);
-    pnh.param<int>("hue_1_min", hue_1_min, 0);
-    pnh.param<int>("hue_2_max", hue_2_max, 179);
-    pnh.param<int>("hue_2_min", hue_2_min, 159);
-    pnh.param<int>("sat_max", sat_max, 255);
-    pnh.param<int>("sat_min", sat_min, 40);
-    pnh.param<int>("val_max", val_max, 255);
-    pnh.param<int>("val_min", val_min, 120);
+    pnh.param<int>("red_hue_1_max", redHMax1, 10);
+    pnh.param<int>("red_hue_1_min", redHMin1, 0);
+    pnh.param<int>("red_hue_2_max", redHMax2, 179);
+    pnh.param<int>("red_hue_2_min", redHMin2, 159);
+    pnh.param<int>("yellow_hue_max", yellowHMax, 50);
+    pnh.param<int>("yellow_hue_min", yellowHMin, 20);
+    pnh.param<int>("sat_max", satMax, 255);
+    pnh.param<int>("sat_min", satMin, 40);
+    pnh.param<int>("val_max", valMax, 255);
+    pnh.param<int>("val_min", valMin, 120);
 
     // imshow srouce & retult;
-    pnh.param<bool>("show_source", show_source, true);
-    pnh.param<bool>("show_reduced", show_reduced, true);
-    pnh.param<bool>("show_sliding_window", show_sliding_window, true);
+    pnh.param<bool>("show_source", showSource, true);
+    pnh.param<bool>("show_reduced", showReduced, true);
+    pnh.param<bool>("show_sliding_window", showSlidingWindow, true);
 
-    // waypoint
-    pnh.param<int>("waypoint_height", waypoint_height, 3);
+    // sliding window
+    pnh.param<int>("window_width", windowWidth, 3);
+    pnh.param<int>("window_num", windowNum, 3);
+    pnh.param<int>("target_window_height", targetWindowHeight, 3);
+
+    timePointPrev = ros::Time::now();
 }
 
 void LaneDetection::saveLastImage()
 {
-    if (save_last_image)
+    if (bSaveLastImage)
     {
-        imwrite("/home/a/workspace/my_ws/line.jpg", src);
-        imwrite("/home/a/workspace/my_ws/birdeye.jpg", birdEye);
-        imwrite("/home/a/workspace/my_ws/binaryimg.jpg", binaryImg);
+        imwrite("/home/a/line.jpg", src);
+        imwrite("/home/a/topView.jpg", topView);
         std::cout << "\n\nIMAGE SAVED!!\n\n";
     }
 }
 
 void LaneDetection::imgCallback(const sensor_msgs::CompressedImage::ConstPtr & msg)
 {
+    // convert sensor_msgs to cv::Mat
     cv_bridge::CvImagePtr cvPtr;
     cvPtr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
     src = cvPtr->image;
-    if (show_source) imshow("src", src);
 
+    /*
+     * get perspective transform
+    */
     Mat warp_mat = getPerspectiveTransform(srcTri, dstTri);
-    Mat dst1 = Mat::zeros(src.size(), src.type());
-    Mat dst2 = Mat::zeros(src.size(), src.type());
-    Mat dst_lane = Mat::zeros(src.size(), src.type());
+    warpPerspective(src, topView, warp_mat, topView.size());
+
+    if (showSource)
+    {
+        imshow("src", src);
+        imshow("topView", topView);
+    }
+
+    /*
+     * get binary image
+    */
     Mat hsv;
+    cvtColor(topView, hsv, COLOR_BGR2HSV);
 
-    // get binary image
-    cvtColor(src, hsv, COLOR_BGR2HSV);
-    inRange(hsv, Scalar(hue_1_min, sat_min, val_min), Scalar(hue_1_max, sat_max, val_max),dst1);
-    inRange(hsv, Scalar(hue_2_min, sat_min, val_min), Scalar(hue_2_max, sat_max, val_max),dst2);
-    binaryImg = dst1 + dst2;
+    // red lane binary
+    Mat dstRed1 = Mat::zeros(src.size(), src.type());
+    Mat dstRed2 = Mat::zeros(src.size(), src.type());
+    inRange(hsv, Scalar(redHMin1, satMin, valMin), Scalar(redHMax1, satMax, valMax),dstRed1);
+    inRange(hsv, Scalar(redHMin2, satMin, valMin), Scalar(redHMax2, satMax, valMax),dstRed2);
+    topViewBinRed = dstRed1 + dstRed2;
 
-    // get bird-eye-view
-    warpPerspective(binaryImg, birdEye, warp_mat, birdEye.size());
+    // yellow lane binary
+    inRange(hsv, Scalar(yellowHMin, satMin, valMin), Scalar(yellowHMax, satMax, valMax),topViewBinYellow);
 
-    // get reduced;
-    Mat rdc_birdeye, rdc_roi;
-    rdc_roi = birdEye(Rect(0, birdEye.rows * 2 / 3, birdEye.cols , birdEye.rows / 3));
-    reduce(rdc_roi ,rdc_birdeye, 0, REDUCE_SUM, CV_32S);
-    normalize(rdc_birdeye, rdc_birdeye, 0, row__ , NORM_MINMAX);
-    int * rdc_data = rdc_birdeye.ptr<int>(0);
+    // remove salt noise
+    erodeAndDilate(topViewBinRed, MorphShapes::MORPH_RECT, Size(3,3), 3);
+    erodeAndDilate(topViewBinYellow, MorphShapes::MORPH_RECT, Size(3,3), 3);
 
-    // reduce img
-    if (show_reduced)
+    // show result
+    imshow("yellow lane", topViewBinYellow);
+    imshow("red lane", topViewBinRed);
+
+    /*
+     * sliding window method
+    */
+
+    //get centeroids of both lane;
+    std::vector<Point> centeroidsYellow;
+    std::vector<Point> centeroidsRed;
+    getSlidingWindow(topViewBinYellow, centeroidsYellow, windowWidth, windowNum);
+    getSlidingWindow(topViewBinRed, centeroidsRed, windowWidth, windowNum);
+
+    // publish target steer and on lane
+    Point targetWayPoint;
+    targetWayPoint.x = std::abs((centeroidsRed[static_cast<size_t>(targetWindowHeight)].x + centeroidsYellow[static_cast<size_t>(targetWindowHeight)].x)/ 2);
+    targetWayPoint.y = std::abs(centeroidsRed[static_cast<size_t>(targetWindowHeight)].y);
+
+    targetSteer.data = std::atan2((topView.cols / 2) - targetWayPoint.x, topView.rows - targetWayPoint.y);
+    pubTargetSteer.publish(targetSteer);
+
+    if (centeroidsRed[static_cast<size_t>(targetWindowHeight)].x - centeroidsYellow[static_cast<size_t>(targetWindowHeight)].x > 0)
     {
-        Mat rdc_img = Mat::zeros(birdEye.size(), birdEye.type());
-        for (int c = 0; c < rdc_birdeye.cols; c++)
-        {
-            if ( static_cast<int>(rdc_data[c]) == 0) continue;
-            line(rdc_img, Point(c, rdc_img.rows - 1), Point(c, rdc_img.rows - 1 - rdc_data[c]), Scalar(255));
-        }
-        imshow("rdc", rdc_img);
+        onLane.data = "ON_LANE_RIGHT";
     }
-
-    // get lane x position using row-reduced data
-    std::vector<int> lane_start{0,rdc_birdeye.cols - 1};
-    for (int c = 1; c < rdc_birdeye.cols; ++c)
+    else
     {
-        if(rdc_data[c] != 0)
-        {
-            lane_start[0] = c;
-            break;
-        }
+        onLane.data = "ON_LANE_LEFT";
     }
-    for (int c = 1; c < rdc_birdeye.cols; ++c)
-    {
-        if(rdc_data[rdc_birdeye.cols - c] != 0)
-        {
-            lane_start[1] = rdc_birdeye.cols - c;
-            break;
-        }
-    }
+    pubOnLane.publish(onLane);
 
-    // sliding window
-    const int box_height = row__ / 6;
-    const int box_width = 200;
-    Size box_size(box_width, box_height);
-    Mat box;
+    // draw sliding window
+    Mat topViewMerged;
+    Mat slidingWindowImg;
+    bitwise_or(topViewBinRed, topViewBinYellow, topViewMerged);
+    cvtColor(topViewMerged, slidingWindowImg, COLOR_GRAY2BGR);
+    drawSlidingWindow(slidingWindowImg, centeroidsRed, windowWidth);
+    drawSlidingWindow(slidingWindowImg, centeroidsYellow, windowWidth);
 
-    // tmp to visualize sliding window
-    Mat tmp;
-    if(show_sliding_window)
-    {
-        tmp = birdEye.clone();
-        cvtColor(birdEye, tmp, COLOR_GRAY2BGR);
-    }
+    line(slidingWindowImg, Point(slidingWindowImg.cols / 2 - 200, targetWayPoint.y), Point(slidingWindowImg.cols / 2 + 200, targetWayPoint.y), Scalar(0, 255, 255), 1);
+    line(slidingWindowImg, Point(slidingWindowImg.cols / 2, targetWayPoint.y - 20), Point(slidingWindowImg.cols / 2, targetWayPoint.y + 20), Scalar(0, 255, 255), 1);
+    line(slidingWindowImg, Point(slidingWindowImg.cols / 2 - 150, targetWayPoint.y - 20), Point(slidingWindowImg.cols / 2 - 150, targetWayPoint.y + 20), Scalar(0, 255, 255), 1);
+    line(slidingWindowImg, Point(slidingWindowImg.cols / 2 + 150, targetWayPoint.y - 20), Point(slidingWindowImg.cols / 2 + 150, targetWayPoint.y + 20), Scalar(0, 255, 255), 1);
+    line(slidingWindowImg, Point(slidingWindowImg.cols / 2 - 200, targetWayPoint.y - 20), Point(slidingWindowImg.cols / 2 - 200, targetWayPoint.y + 20), Scalar(0, 255, 255), 1);
+    line(slidingWindowImg, Point(slidingWindowImg.cols / 2 + 200, targetWayPoint.y - 20), Point(slidingWindowImg.cols / 2 + 200, targetWayPoint.y + 20), Scalar(0, 255, 255), 1);
+    circle(slidingWindowImg, targetWayPoint, 2, Scalar(0,0,255), -1);
 
-    int center[2] = {lane_start[0], lane_start[1]};
-    int left_lane[6] = {0,0,0,0,0,0};
-    int right_lane[6] = {0,0,0,0,0,0};
+    imshow("sliding window", slidingWindowImg);
 
-    for(int i = 0; i < 6; i++)
-    {
-        for(int j = 0; j < 2; j++)
-        {
-            Point left_top(center[j] - box_width / 2, box_height * (5 - i));
-            Point right_bottom(center[j] + box_width / 2, box_height * (6 - i));
-            Rect roi(left_top, box_size);
+    timePointElapsed = ros::Time::now().toSec() - timePointPrev.toSec();
+    timePointPrev = ros::Time::now();
 
-            if(roi.x < 0) roi.x = 0;
-            if(roi.width + roi.x > birdEye.cols) roi.x = birdEye.cols - box_width;
-            box = birdEye(roi);
-
-            uchar * boxData;
-            int sum_x = 0;
-            int cnt = 0;
-
-            for (int r = 0; r < box.rows; r++)
-            {
-                boxData = box.ptr<uchar>(r);
-                for (int c = 0; c < box.cols; c++)
-                {
-                    if(boxData[c] == 0) continue;
-                    else
-                    {
-                        sum_x += c;
-                        cnt++;
-                    }
-                }
-            }
-
-            Point ct;
-            if(cnt == 0)
-            {
-                ct.x = center[j];
-                if(i > 1)
-                {
-                    if(j == 0)
-                    {
-                        ct.x += left_lane[i - 1] - left_lane[i - 2] - 50;
-                    }
-                    else if(j == 1)
-                    {
-                        ct.x += right_lane[i - 1] - right_lane[i - 2] + 50;
-                    }
-                }
-            }
-            else
-            {
-                ct.x = sum_x / cnt + left_top.x;
-            }
-            ct.y = box_height * (5 - i) + box_height / 2;
-            center[j] = ct.x;
-
-            if ( j == 0)
-            {
-                left_lane[i] = ct.x;
-            }
-            else if (j == 1)
-            {
-                right_lane[i] = ct.x;
-            }
-        }
-    }
-
-    Point waypoint((left_lane[waypoint_height] + right_lane[waypoint_height]) / 2, box_height * (6 - waypoint_height) - box_height / 2);
-    pt.x = birdEye.rows - waypoint.y;
-    pt.y = birdEye.cols / 2 - waypoint.x;
-    pubPoint.publish(pt);
-
-    if(show_sliding_window)
-    {
-        for (int i = 0; i < 6 ; i++)
-        {
-            Rect window_left(left_lane[i] - box_width / 2, box_height * (5 - i), box_width, box_height );
-            Rect window_right(right_lane[i] - box_width / 2, box_height * (5 - i), box_width, box_height );
-            rectangle(tmp, window_left, Scalar(0,255,0));
-            rectangle(tmp, window_right, Scalar(0,255,0));
-            circle(tmp, Point(left_lane[i], box_height * (5 - i) + box_height / 2), 2, Scalar(0,255,0), -1);
-            circle(tmp, Point(right_lane[i], box_height * (5 - i) + box_height / 2), 2, Scalar(0,255,0), -1);
-        }
-
-        line(tmp, Point(tmp.cols / 2 - 200, waypoint.y), Point(tmp.cols / 2 + 200, waypoint.y), Scalar(0, 255, 255), 1);
-        line(tmp, Point(tmp.cols / 2, waypoint.y - 20), Point(tmp.cols / 2, waypoint.y + 20), Scalar(0, 255, 255), 1);
-        line(tmp, Point(tmp.cols / 2 - 150, waypoint.y - 20), Point(tmp.cols / 2 - 150, waypoint.y + 20), Scalar(0, 255, 255), 1);
-        line(tmp, Point(tmp.cols / 2 + 150, waypoint.y - 20), Point(tmp.cols / 2 + 150, waypoint.y + 20), Scalar(0, 255, 255), 1);
-        line(tmp, Point(tmp.cols / 2 - 200, waypoint.y - 20), Point(tmp.cols / 2 - 200, waypoint.y + 20), Scalar(0, 255, 255), 1);
-        line(tmp, Point(tmp.cols / 2 + 200, waypoint.y - 20), Point(tmp.cols / 2 + 200, waypoint.y + 20), Scalar(0, 255, 255), 1);
-        circle(tmp, waypoint, 2, Scalar(0,0,255), -1);
-
-        imshow("tmp", tmp);
-    }
+    ROS_INFO("LANE : %s", onLane.data.c_str());
+    ROS_INFO("TARGET STEER : %lf", targetSteer.data);
+    ROS_INFO("TIME ELAPSED : %lf [ms]\n", timePointElapsed * 1000.0);
 
     waitKey(1);
+}
+
+void LaneDetection::erodeAndDilate(Mat &input, int shape, Size kSize, int repeat)
+{
+    Mat element = getStructuringElement(shape, kSize);
+    Mat morph = input;
+
+    for (int i = 0; i < repeat; i++)
+    {
+        erode(morph, morph, element);
+    }
+
+    for (int i = 0; i < repeat; i++)
+    {
+        dilate(morph, morph, element);
+    }
+}
+
+void LaneDetection::getSlidingWindow(Mat &input, std::vector<Point> &centeroids, int windowWidth, int windowNum)
+{
+    Mat labels;
+    Mat stats;
+    Mat tmpCenteroids;
+    connectedComponentsWithStats(input, labels, stats, tmpCenteroids, 8);
+
+    int lowerY = 0;
+    Point start;
+    int idx = 0;
+    for ( int i = 1; i < stats.rows; i++)
+    {
+        int * statsPtr = stats.ptr<int>(i);
+        int leftLowY = static_cast<int>(statsPtr[LEFT_TOP_Y] + statsPtr[HEIGHT]);
+        int leftLowX = static_cast<int>(statsPtr[LEFT_TOP_X]);
+        if(lowerY < leftLowY)
+        {
+            start.x = leftLowX;
+            start.y = leftLowY;
+            idx = i;
+            lowerY = leftLowY;
+        }
+    }
+
+    centeroids.clear();
+    centeroids.reserve(static_cast<size_t>(tmpCenteroids.rows - 1));
+
+    int windowHeight = input.rows / windowNum;
+    Point lt(start.x, windowHeight * (windowNum - 1));
+    Size windowSize(windowWidth, windowHeight);
+    Rect roi(lt, windowSize);
+    for (size_t i = 0; i < static_cast<size_t>(windowNum); i++)
+    {
+
+        if( roi.x < 0) roi.x = 0;
+        if(roi.x + roi.width > input.cols) roi.x = input.cols - roi.width;
+        int centerX = roi.width / 2;
+        int centerY = roi.height / 2;
+        Mat window = input(roi);
+
+        uchar* windowPtr = nullptr;
+        int sum = 0;
+        int cnt = 0;
+
+        for(int r = 0; r < window.rows; r++)
+        {
+            windowPtr = window.ptr<uchar>(r);
+            for (int c = 0; c < window.cols; c++)
+            {
+                if(windowPtr[c] == 0) continue;
+                else
+                {
+                    sum += c;
+                    cnt++;
+                }
+            }
+        }
+
+        if(cnt == 0)
+        {
+            if(i > 1) centerX += ((centeroids[i - 1].x - centeroids[i - 2].x) * 2);
+        }
+        else
+        {
+            centerX = sum / cnt;
+        }
+
+        centeroids.emplace_back(centerX + roi.x, centerY + roi.y);
+
+        roi.x += centerX - roi.width / 2;
+        roi.y -= roi.height;
+
+    }
+}
+
+void LaneDetection::drawSlidingWindow(Mat &input, std::vector<Point>& centeroids, int windowWidth)
+{
+    int windowNum = static_cast<int>(centeroids.size());
+    int windowHeight = input.rows / windowNum;
+    for (size_t i = 0; i < static_cast<size_t>(windowNum); i++)
+    {
+        rectangle(input, Rect(centeroids[i] - Point(windowWidth / 2, windowHeight / 2), Size(windowWidth, windowHeight)), Scalar(0,255,0));
+        circle(input, centeroids[i], 2, Scalar(0,255,0), -1);
+    }
+}
+
+void LaneDetection::setShow_source(bool value)
+{
+    showSource = value;
 }

@@ -60,6 +60,7 @@ void onMouse(int event, int x, int y, int flags, void* userdata)
     }
     imshow("origin", mat);
 }
+
 void onChange1(int , void*) { }
 void onChange2(int , void*) { }
 void onChange3(int , void*) { }
@@ -67,7 +68,7 @@ void onChange3(int , void*) { }
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "Lane_test_node");
-    Mat src = imread("/home/a/workspace/my_ws/line.jpg", IMREAD_COLOR);
+    Mat src = imread("/home/a/line.jpg", IMREAD_COLOR);
     ros::NodeHandle pnh("~");
     CV_Assert(src.data);
     int num = 0;

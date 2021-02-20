@@ -6,7 +6,8 @@
 
 #include <ros/ros.h>
 #include <sensor_msgs/CompressedImage.h>
-#include <geometry_msgs/Point.h>
+#include <std_msgs/Float64.h>
+#include <std_msgs/String.h>
 
 using namespace cv;
 
@@ -15,40 +16,74 @@ class LaneDetection
 public:
     LaneDetection(ros::NodeHandle & nh, ros::NodeHandle & pnh);
     void saveLastImage();
+    void setShow_source(bool value);
+
 private:
 
-    // ROS Service
+    // ros service
     ros::Subscriber subCompImg;
-    ros::Publisher pubPoint;
+    ros::Publisher pubTargetSteer;
+    ros::Publisher pubOnLane;
 
-    geometry_msgs::Point pt;
-
-    void imgCallback(const sensor_msgs::CompressedImage::ConstPtr & msg);
-
+    // ros messages
+    std_msgs::Float64 targetSteer;
+    std_msgs::String onLane;
 
     // ROS Param
-    bool save_last_image;
-    int hue_1_max;
-    int hue_1_min;
-    int hue_2_max;
-    int hue_2_min;
-    int sat_max;
-    int sat_min;
-    int val_max;
-    int val_min;
-    bool show_source;
-    bool show_reduced;
-    bool show_sliding_window;
-    int waypoint_height;
+    bool bSaveLastImage;
+    int redHMax1;
+    int redHMin1;
+    int redHMax2;
+    int redHMin2;
+    int yellowHMax;
+    int yellowHMin;
+
+    int satMax;
+    int satMin;
+    int valMax;
+    int valMin;
+
+    bool showSource;
+    bool showReduced;
+    bool showSlidingWindow;
+    int windowWidth;
+    int windowNum;
+    int targetWindowHeight;
 
     // Variables
     Mat src;
-    Mat birdEye;
-    Mat binaryImg;
-
+    Mat topView;
+    Mat topViewBinRed;
+    Mat topViewBinYellow;
 
     std::vector<Point2f> srcTri;
     std::vector<Point2f> dstTri;
+
+    ros::Time timePointPrev;
+    double timePointElapsed;
+
+    void imgCallback(const sensor_msgs::CompressedImage::ConstPtr & msg);
+
+    void erodeAndDilate(Mat& input, int shape, Size kSize, int repeat);
+
+    enum StatsIdx
+    {
+        LEFT_TOP_X = 0,
+        LEFT_TOP_Y,
+        WIDTH,
+        HEIGHT,
+        PIXELS
+    };
+
+    enum CenteroidIdx
+    {
+        CENTER_X = 0,
+        CENTER_Y
+    };
+
+    void getSlidingWindow(Mat& input, std::vector<Point>& centeroids, int windowWidth, int windowNum);
+    void drawSlidingWindow(Mat& input, std::vector<Point>& centeroids, int windowWidth);
+
 };
 
 #endif // LANE_DETECTION_H

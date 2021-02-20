@@ -4,10 +4,12 @@
         <param name="save_last_img" type="bool" value="false"/>
 
         <!-- get color by HSV -->
-        <param name="hue_1_max" type="int" value="10"/>
-        <param name="hue_1_min" type="int" value="0"/>
-        <param name="hue_2_max" type="int" value="179"/>
-        <param name="hue_2_min" type="int" value="159"/>
+        <param name="red_hue_1_max" type="int" value="10"/>     <!-- red low -->
+        <param name="red_hue_1_min" type="int" value="0"/>      <!-- red low -->
+        <param name="red_hue_2_max" type="int" value="179"/>    <!-- red high -->
+        <param name="red_hue_2_min" type="int" value="159"/>    <!-- red high -->
+        <param name="yellow_hue_max" type="int" value="50"/>    <!-- yellow -->
+        <param name="yellow_hue_min" type="int" value="20"/>    <!-- yellow -->
         <param name="sat_max" type="int" value="255"/>
         <param name="sat_min" type="int" value="40"/>
         <param name="val_max" type="int" value="255"/>
@@ -18,7 +20,9 @@
         <param name="show_reduced" type="bool" value="false"/>
         <param name="show_sliding_window" type="bool" value="true"/>
 
-        <!-- waypoint hegiht -->
-        <param name="waypoint_height" type="int" value="3"/>
+        <!-- sliding window -->
+        <param name="window_width" type="int" value="200"/>
+        <param name="window_num" type="int" value="6"/>
+        <param name="target_window_height" type="int" value="3"/>
     </node>
 </launch>
