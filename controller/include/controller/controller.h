@@ -5,6 +5,7 @@
 #include <sensor_msgs/Joy.h>
 #include <ackermann_msgs/AckermannDriveStamped.h>
 #include <geometry_msgs/Twist.h>
+#include <deque>
 
 class Controller
 {
@@ -12,17 +13,27 @@ public:
     Controller(ros::NodeHandle nh, ros::NodeHandle pnh);
 
     void setTargetVelocity(const double target);
-    double getTargetVelocity() const {return targetVelocity;}
-
-    void setSteer(const double target);
-    double getSteer() const {return steer;}
-
-    void putBrake();
-    bool getBrake() const {return brake;}
+    void setTargetSteer(const double target);
 private:
 
-    // Joy Values
+    // ROS Callbacks
+    void joyCallback(const sensor_msgs::Joy::ConstPtr & msg);
+    void ctrlInputCallback(const geometry_msgs::Twist::ConstPtr& msg);
+    void ctrlTimerCallback(const ros::TimerEvent& event);
 
+    // ROS Services
+    ros::Subscriber subJoy;
+    ros::Subscriber subTwist;
+    ros::Publisher pubAck;
+    ros::Timer ctrlTimer;
+
+    // ROS param
+    double accel;
+    double pGain;
+    double iGain;
+    double dGain;
+
+    // Joy Message Index
     enum AXES_IDX
     {
         AXES_LEFT_RL = 0,   // left stick left/right index
@@ -45,37 +56,21 @@ private:
         BT_RT = 7,   // RT Button
     };
 
-    // ROS Services
-    ros::Subscriber subJoy;
-    ros::Subscriber subTwist;
-    ros::Publisher pubAck;
-    ros::Timer ctrlTimer;
+    void setVelocity(const double timeElapsedSec, const double accelMperSec);
+    void setSteer(const double pGain, const double iGain, const double dGain);
 
-    // ROS param
-    double accel;
-    bool joyVelocitySteerControl;
-
-    // ROS Callbacks
-    void joyCallback(const sensor_msgs::Joy::ConstPtr & msg);
-    void ctrlInputCallback(const geometry_msgs::Twist::ConstPtr& msg);
-    void ctrlTimerCallback(const ros::TimerEvent& event);
-
-
-    // Constant
     const double steeringRatio = 0.4;
 
-    // functions
-    void velocityController();
-    void steeringCosntroller();
-
-    // variables
     ros::Time prevTime;
-    double velocity;    // m/s
     double targetVelocity;
+    double targetSteer;
+    double velocity;    // m/s
     double steer;       // radian
-    bool brake;
-    bool estop;
-    bool run;
+
+    bool menual;
+
+    std::deque<double> steeringError;
+    const size_t queueSize = 10;
 };
 
 #endif // CONTROLLER_H
