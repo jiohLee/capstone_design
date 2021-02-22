@@ -8,6 +8,7 @@ Controller::Controller(ros::NodeHandle nh, ros::NodeHandle pnh)
     ctrlTimer = nh.createTimer(ros::Duration(1.0 / 20.0), &Controller::ctrlTimerCallback, this);
 
     pnh.param<double>("accel", accel, 0.2);
+    pnh.param<double>("steer_offset", steerOffset, 0.05);
 
     pnh.param<double>("p_gain", pGain, 0.6);
     pnh.param<double>("i_gain", iGain, 0.005);
@@ -164,7 +165,7 @@ void Controller::setVelocity(const double timeElapsedSec, const double accelMper
         if (velocity < -1) velocity = -1;
         if (targetVelocity < -0.2 && velocity > -0.2 ) velocity = -0.2;
     }
-    else if(menual) if(targetVelocity == 0.0) velocity = 0;
+    if(menual && targetVelocity == 0.0) velocity = 0;
 }
 
 void Controller::setSteer(const double pGain, const double iGain, const double dGain)
@@ -182,6 +183,7 @@ void Controller::setSteer(const double pGain, const double iGain, const double d
         }
         double derivative = steeringError[9] - steeringError[8];
         steer = pGain * steeringError[9] + dGain * derivative + iGain * integral;
+        steer -= steerOffset;
     }
 }
 

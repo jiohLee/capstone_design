@@ -29,6 +29,7 @@ private:
 
     // ROS param
     double accel;
+    double steerOffset;
     double pGain;
     double iGain;
     double dGain;

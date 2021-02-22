@@ -72,7 +72,7 @@ void LaneDetection::imgCallback(const sensor_msgs::CompressedImage::ConstPtr & m
 
     if (showSource)
     {
-        imshow("src", src);
+//        imshow("src", src);
         imshow("topView", topView);
     }
 
@@ -97,8 +97,8 @@ void LaneDetection::imgCallback(const sensor_msgs::CompressedImage::ConstPtr & m
     erodeAndDilate(topViewBinYellow, MorphShapes::MORPH_RECT, Size(3,3), 3);
 
     // show result
-    imshow("yellow lane", topViewBinYellow);
-    imshow("red lane", topViewBinRed);
+//    imshow("yellow lane", topViewBinYellow);
+//    imshow("red lane", topViewBinRed);
 
     /*
      * sliding window method
@@ -144,7 +144,7 @@ void LaneDetection::imgCallback(const sensor_msgs::CompressedImage::ConstPtr & m
     line(slidingWindowImg, Point(slidingWindowImg.cols / 2 + 200, targetWayPoint.y - 20), Point(slidingWindowImg.cols / 2 + 200, targetWayPoint.y + 20), Scalar(0, 255, 255), 1);
     circle(slidingWindowImg, targetWayPoint, 2, Scalar(0,0,255), -1);
 
-    imshow("sliding window", slidingWindowImg);
+    if(showSlidingWindow) imshow("sliding window", slidingWindowImg);
 
     timePointElapsed = ros::Time::now().toSec() - timePointPrev.toSec();
     timePointPrev = ros::Time::now();

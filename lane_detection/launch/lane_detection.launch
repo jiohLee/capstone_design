@@ -23,6 +23,6 @@
         <!-- sliding window -->
         <param name="window_width" type="int" value="200"/>
         <param name="window_num" type="int" value="6"/>
-        <param name="target_window_height" type="int" value="3"/>
+        <param name="target_window_height" type="int" value="4"/>
     </node>
 </launch>
