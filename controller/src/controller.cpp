@@ -164,6 +164,7 @@ void Controller::setVelocity(const double timeElapsedSec, const double accelMper
         if (velocity < -1) velocity = -1;
         if (targetVelocity < -0.2 && velocity > -0.2 ) velocity = -0.2;
     }
+    else if(menual) if(targetVelocity == 0.0) velocity = 0;
 }
 
 void Controller::setSteer(const double pGain, const double iGain, const double dGain)
