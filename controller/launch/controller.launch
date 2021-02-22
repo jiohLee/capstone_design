@@ -4,9 +4,10 @@
         <param name="accel" type="double" value="0.2"/>
         <param name="steer_offset" type="double" value="0.05"/>
 
-        <param name="p_gain" type="double" value="0.6"/>
-        <param name="i_gain" type="double" value="0.001"/>
+        <param name="p_gain" type="double" value="0.7"/>
+        <param name="i_gain" type="double" value="0.005"/>
         <param name="d_gain" type="double" value="2"/>
 
+        <param name="menual_start" type="bool" value="false"/>
     </node>
 </launch>

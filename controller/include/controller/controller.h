@@ -33,6 +33,7 @@ private:
     double pGain;
     double iGain;
     double dGain;
+    bool menualStart;
 
     // Joy Message Index
     enum AXES_IDX

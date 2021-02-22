@@ -14,12 +14,15 @@ Controller::Controller(ros::NodeHandle nh, ros::NodeHandle pnh)
     pnh.param<double>("i_gain", iGain, 0.005);
     pnh.param<double>("d_gain", dGain, 2);
 
+    pnh.param<bool>("menual_start", menualStart, true);
+
+
     targetVelocity = 0.0;
     targetSteer = 0.0;
     velocity = 0.0;
     steer = 0.0;
 
-    menual = true;
+    menual = menualStart;
 
     steeringError.clear();
     prevTime = ros::Time::now();

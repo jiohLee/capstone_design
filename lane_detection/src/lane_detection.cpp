@@ -72,8 +72,8 @@ void LaneDetection::imgCallback(const sensor_msgs::CompressedImage::ConstPtr & m
 
     if (showSource)
     {
-//        imshow("src", src);
-        imshow("topView", topView);
+        imshow("src", src);
+//        imshow("topView", topView);
     }
 
     /*
@@ -109,6 +109,11 @@ void LaneDetection::imgCallback(const sensor_msgs::CompressedImage::ConstPtr & m
     std::vector<Point> centeroidsRed;
     getSlidingWindow(topViewBinYellow, centeroidsYellow, windowWidth, windowNum);
     getSlidingWindow(topViewBinRed, centeroidsRed, windowWidth, windowNum);
+
+    for (size_t i = 0; i < centeroidsRed.size(); i++)
+    {
+        std::cout << centeroidsRed[i] << " " << centeroidsYellow[i] << "\n";
+    }std::cout << "\n";
 
     // publish target steer and on lane
     Point targetWayPoint;
@@ -196,11 +201,22 @@ void LaneDetection::getSlidingWindow(Mat &input, std::vector<Point> &centeroids,
         }
     }
 
+
+    uchar* inputPtr = input.ptr<uchar>(start.y - 1);
+    int startX = 0;
+    for (int i = start.x - 1; i < input.cols ; i++)
+    {
+        if(inputPtr[i] > 0)
+        {
+            startX = i;
+            break;
+        }
+    }
+
     centeroids.clear();
     centeroids.reserve(static_cast<size_t>(tmpCenteroids.rows - 1));
-
     int windowHeight = input.rows / windowNum;
-    Point lt(start.x, windowHeight * (windowNum - 1));
+    Point lt(startX, windowHeight * (windowNum - 1));
     Size windowSize(windowWidth, windowHeight);
     Rect roi(lt, windowSize);
     for (size_t i = 0; i < static_cast<size_t>(windowNum); i++)
@@ -232,7 +248,7 @@ void LaneDetection::getSlidingWindow(Mat &input, std::vector<Point> &centeroids,
 
         if(cnt == 0)
         {
-            if(i > 1) centerX += ((centeroids[i - 1].x - centeroids[i - 2].x) * 2);
+            if(i > 1) centerX = static_cast<int>(centeroids[i - 1].x + (centeroids[i - 1].x - centeroids[i - 2].x) - roi.x);
         }
         else
         {
