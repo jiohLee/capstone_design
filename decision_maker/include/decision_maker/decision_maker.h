@@ -17,7 +17,7 @@ private:
 
     // ROS Service
     ros::Publisher pubCmdVel;
-    ros::Subscriber subPoint;
+    ros::Subscriber subTargetSteer;
     ros::Timer timer;
 
     // ROS Callbacks

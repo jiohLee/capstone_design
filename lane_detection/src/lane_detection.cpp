@@ -15,8 +15,8 @@ LaneDetection::LaneDetection(ros::NodeHandle & nh, ros::NodeHandle & pnh)
     ,dstTri({Point2f(left_high, 0), Point2f(col__ - left_high, 0), Point2f(left_high, row__), Point2f(col__ - left_high, row__)})// after perspective transform
 {
     subCompImg = nh.subscribe("usb_cam/image_raw/compressed", 1, &LaneDetection::imgCallback, this);
-    pubTargetSteer = nh.advertise<std_msgs::Float64>("/target_steer", 1);
-    pubOnLane = nh.advertise<std_msgs::String>("/on_lane", 1);
+    pubTargetSteer = nh.advertise<std_msgs::Float64>("/lane_detection/target_steer", 1);
+    pubOnLane = nh.advertise<std_msgs::String>("/lane_detection/on_lane", 1);
     namedWindow("src", WINDOW_AUTOSIZE);
 
     // save image

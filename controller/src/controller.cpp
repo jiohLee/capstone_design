@@ -4,7 +4,7 @@ Controller::Controller(ros::NodeHandle nh, ros::NodeHandle pnh)
 {
     pubAck = nh.advertise<ackermann_msgs::AckermannDriveStamped>("/ackermann_cmd", 1);
     subJoy = nh.subscribe("/joy", 1, &Controller::joyCallback, this);
-    subTwist = nh.subscribe("/cmd_vel", 1, &Controller::ctrlInputCallback, this);
+    subTwist = nh.subscribe("/decision_maker/cmd_vel", 1, &Controller::ctrlInputCallback, this);
     ctrlTimer = nh.createTimer(ros::Duration(1.0 / 20.0), &Controller::ctrlTimerCallback, this);
 
     pnh.param<double>("accel", accel, 0.2);

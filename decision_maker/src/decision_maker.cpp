@@ -3,8 +3,9 @@
 
 DecisionMaker::DecisionMaker(ros::NodeHandle & nh, ros::NodeHandle & pnh)
 {
-    pubCmdVel = nh.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
+    pubCmdVel = nh.advertise<geometry_msgs::Twist>("/decision_maker/cmd_vel", 1);
     // subTrackArray = nh.subscribe("/datmo/box_kf", 1, &DecisionMaker::trackArrayCallback, this);
+    subTargetSteer = nh.subscribe("/lane_detection/target_steer", 1, &DecisionMaker::targetSteerCallback, this);
 
     timer = nh.createTimer(ros::Duration(1.0 / 20.0), &DecisionMaker::timerCallback, this);
     pnh.param<double>("target_velocity", targetVel, 0.8);
