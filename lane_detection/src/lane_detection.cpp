@@ -19,10 +19,10 @@ LaneDetection::LaneDetection(ros::NodeHandle & nh, ros::NodeHandle & pnh)
     pubOnLane = nh.advertise<std_msgs::String>("/lane_detection/on_lane", 1);
     namedWindow("src", WINDOW_AUTOSIZE);
 
-    // save image
+    // save last image for transformation
     pnh.param<bool>("save_last_img", bSaveLastImage, false);
 
-    // get color ny HSV
+    // hsv color ranges
     pnh.param<int>("red_hue_1_max", redHMax1, 10);
     pnh.param<int>("red_hue_1_min", redHMin1, 0);
     pnh.param<int>("red_hue_2_max", redHMax2, 179);
@@ -34,16 +34,12 @@ LaneDetection::LaneDetection(ros::NodeHandle & nh, ros::NodeHandle & pnh)
     pnh.param<int>("val_max", valMax, 255);
     pnh.param<int>("val_min", valMin, 120);
 
-    // imshow srouce & retult;
-    pnh.param<bool>("show_source", showSource, true);
-    pnh.param<bool>("show_reduced", showReduced, true);
-    pnh.param<bool>("show_sliding_window", showSlidingWindow, true);
-
-    // sliding window
+    // Sliding Window params
     pnh.param<int>("window_width", windowWidth, 3);
     pnh.param<int>("window_num", windowNum, 3);
     pnh.param<int>("target_window_height", targetWindowHeight, 3);
 
+    // Init Time Point
     timePointPrev = ros::Time::now();
 }
 
@@ -70,12 +66,6 @@ void LaneDetection::imgCallback(const sensor_msgs::CompressedImage::ConstPtr & m
     Mat warp_mat = getPerspectiveTransform(srcTri, dstTri);
     warpPerspective(src, topView, warp_mat, topView.size());
 
-    if (showSource)
-    {
-        imshow("src", src);
-//        imshow("topView", topView);
-    }
-
     /*
      * get binary image
     */
@@ -96,24 +86,15 @@ void LaneDetection::imgCallback(const sensor_msgs::CompressedImage::ConstPtr & m
     erodeAndDilate(topViewBinRed, MorphShapes::MORPH_RECT, Size(3,3), 3);
     erodeAndDilate(topViewBinYellow, MorphShapes::MORPH_RECT, Size(3,3), 3);
 
-    // show result
-//    imshow("yellow lane", topViewBinYellow);
-//    imshow("red lane", topViewBinRed);
-
     /*
      * sliding window method
     */
 
-    //get centeroids of both lane;
+    // get centeroids of both lane;
     std::vector<Point> centeroidsYellow;
     std::vector<Point> centeroidsRed;
     getSlidingWindow(topViewBinYellow, centeroidsYellow, windowWidth, windowNum);
     getSlidingWindow(topViewBinRed, centeroidsRed, windowWidth, windowNum);
-
-    for (size_t i = 0; i < centeroidsRed.size(); i++)
-    {
-        std::cout << centeroidsRed[i] << " " << centeroidsYellow[i] << "\n";
-    }std::cout << "\n";
 
     // publish target steer and on lane
     Point targetWayPoint;
@@ -149,7 +130,8 @@ void LaneDetection::imgCallback(const sensor_msgs::CompressedImage::ConstPtr & m
     line(slidingWindowImg, Point(slidingWindowImg.cols / 2 + 200, targetWayPoint.y - 20), Point(slidingWindowImg.cols / 2 + 200, targetWayPoint.y + 20), Scalar(0, 255, 255), 1);
     circle(slidingWindowImg, targetWayPoint, 2, Scalar(0,0,255), -1);
 
-    if(showSlidingWindow) imshow("sliding window", slidingWindowImg);
+    imshow("Source", src);
+    imshow("Sliding Window", slidingWindowImg);
 
     timePointElapsed = ros::Time::now().toSec() - timePointPrev.toSec();
     timePointPrev = ros::Time::now();
@@ -159,22 +141,6 @@ void LaneDetection::imgCallback(const sensor_msgs::CompressedImage::ConstPtr & m
     ROS_INFO("TIME ELAPSED : %lf [ms]\n", timePointElapsed * 1000.0);
 
     waitKey(1);
-}
-
-void LaneDetection::erodeAndDilate(Mat &input, int shape, Size kSize, int repeat)
-{
-    Mat element = getStructuringElement(shape, kSize);
-    Mat morph = input;
-
-    for (int i = 0; i < repeat; i++)
-    {
-        erode(morph, morph, element);
-    }
-
-    for (int i = 0; i < repeat; i++)
-    {
-        dilate(morph, morph, element);
-    }
 }
 
 void LaneDetection::getSlidingWindow(Mat &input, std::vector<Point> &centeroids, int windowWidth, int windowNum)
@@ -274,7 +240,18 @@ void LaneDetection::drawSlidingWindow(Mat &input, std::vector<Point>& centeroids
     }
 }
 
-void LaneDetection::setShow_source(bool value)
+void LaneDetection::erodeAndDilate(Mat &input, int shape, Size kSize, int repeat)
 {
-    showSource = value;
+    Mat element = getStructuringElement(shape, kSize);
+    Mat morph = input;
+
+    for (int i = 0; i < repeat; i++)
+    {
+        erode(morph, morph, element);
+    }
+
+    for (int i = 0; i < repeat; i++)
+    {
+        dilate(morph, morph, element);
+    }
 }

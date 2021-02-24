@@ -14,18 +14,21 @@ using namespace cv;
 class LaneDetection
 {
 public:
+
     LaneDetection(ros::NodeHandle & nh, ros::NodeHandle & pnh);
     void saveLastImage();
-    void setShow_source(bool value);
 
 private:
 
-    // ros service
+    // ROS Callbacks
+    void imgCallback(const sensor_msgs::CompressedImage::ConstPtr & msg);
+
+    // ROS Service
     ros::Subscriber subCompImg;
     ros::Publisher pubTargetSteer;
     ros::Publisher pubOnLane;
 
-    // ros messages
+    // ROS messages
     std_msgs::Float64 targetSteer;
     std_msgs::String onLane;
 
@@ -43,29 +46,16 @@ private:
     int valMax;
     int valMin;
 
-    bool showSource;
-    bool showReduced;
-    bool showSlidingWindow;
     int windowWidth;
     int windowNum;
     int targetWindowHeight;
 
-    // Variables
-    Mat src;
-    Mat topView;
-    Mat topViewBinRed;
-    Mat topViewBinYellow;
-
-    std::vector<Point2f> srcTri;
-    std::vector<Point2f> dstTri;
-
-    ros::Time timePointPrev;
-    double timePointElapsed;
-
-    void imgCallback(const sensor_msgs::CompressedImage::ConstPtr & msg);
-
+    // Functions
+    void getSlidingWindow(Mat& input, std::vector<Point>& centeroids, int windowWidth, int windowNum);
+    void drawSlidingWindow(Mat& input, std::vector<Point>& centeroids, int windowWidth);
     void erodeAndDilate(Mat& input, int shape, Size kSize, int repeat);
 
+    // Connected Component Index
     enum StatsIdx
     {
         LEFT_TOP_X = 0,
@@ -81,9 +71,17 @@ private:
         CENTER_Y
     };
 
-    void getSlidingWindow(Mat& input, std::vector<Point>& centeroids, int windowWidth, int windowNum);
-    void drawSlidingWindow(Mat& input, std::vector<Point>& centeroids, int windowWidth);
+    // Variables
+    Mat src;
+    Mat topView;
+    Mat topViewBinRed;
+    Mat topViewBinYellow;
 
+    std::vector<Point2f> srcTri;
+    std::vector<Point2f> dstTri;
+
+    ros::Time timePointPrev;
+    double timePointElapsed;
 };
 
 #endif // LANE_DETECTION_H

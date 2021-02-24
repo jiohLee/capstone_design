@@ -35,6 +35,10 @@ private:
     double dGain;
     bool menualStart;
 
+    // Functions
+    void setVelocity(const double timeElapsedSec, const double accelMperSec);
+    void setSteer(const double pGain, const double iGain, const double dGain);
+
     // Joy Message Index
     enum AXES_IDX
     {
@@ -58,21 +62,20 @@ private:
         BT_RT = 7,   // RT Button
     };
 
-    void setVelocity(const double timeElapsedSec, const double accelMperSec);
-    void setSteer(const double pGain, const double iGain, const double dGain);
-
+    // Variables
     const double steeringRatio = 0.4;
 
     ros::Time prevTime;
+
     double targetVelocity;
     double targetSteer;
     double velocity;    // m/s
     double steer;       // radian
 
-    bool menual;
-
     std::deque<double> steeringError;
     const size_t queueSize = 10;
+
+    bool menual;
 };
 
 #endif // CONTROLLER_H

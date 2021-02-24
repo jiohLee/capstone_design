@@ -15,16 +15,16 @@ public:
     DecisionMaker(ros::NodeHandle & nh, ros::NodeHandle & pnh);
 private:
 
+    // ROS Callbacks
+    void timerCallback(const ros::TimerEvent& event);
+    void targetSteerCallback(const std_msgs::Float64::ConstPtr& msg);
+
     // ROS Service
     ros::Publisher pubCmdVel;
     ros::Subscriber subTargetSteer;
     ros::Timer timer;
 
-    // ROS Callbacks
-    void timerCallback(const ros::TimerEvent& event);
-    void targetSteerCallback(const std_msgs::Float64::ConstPtr& msg);
-
-    // variables
+    // Variables
     double targetVel;
     double targetSteer;
     double velocity;

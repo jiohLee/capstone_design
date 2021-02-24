@@ -16,7 +16,6 @@ Controller::Controller(ros::NodeHandle nh, ros::NodeHandle pnh)
 
     pnh.param<bool>("menual_start", menualStart, true);
 
-
     targetVelocity = 0.0;
     targetSteer = 0.0;
     velocity = 0.0;
