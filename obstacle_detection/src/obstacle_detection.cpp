@@ -20,10 +20,10 @@ ObstacleDetection::ObstacleDetection(ros::NodeHandle &nh, ros::NodeHandle &pnh)
     ,pnh(pnh)
 {
     subScan = nh.subscribe("/scan", 1, &ObstacleDetection::laserScanCallback, this);
-    pubPcd = nh.advertise<sensor_msgs::PointCloud2>("/point_cloud", 1);
-    pubPcdFiltered = nh.advertise<sensor_msgs::PointCloud2>("/point_cloud_filtered", 1);
-    pubClusters = nh.advertise<sensor_msgs::PointCloud2>("/point_cloud_cluster", 1);
-    pubCenteroids = nh.advertise<sensor_msgs::PointCloud2>("/point_cloud_cluster_centeroids", 1);
+    pubPcd = nh.advertise<sensor_msgs::PointCloud2>("/obstacle_detection/point_cloud", 1);
+    pubPcdFiltered = nh.advertise<sensor_msgs::PointCloud2>("/obstacle_detection/point_cloud_filtered", 1);
+    pubClusters = nh.advertise<sensor_msgs::PointCloud2>("/obstacle_detection/point_cloud_cluster", 1);
+    pubCenteroids = nh.advertise<sensor_msgs::PointCloud2>("/obstacle_detection/point_cloud_cluster_centeroids", 1);
 
     pnh.param<double>("box_height", boxHeight, 2);
     pnh.param<double>("box_width", boxWidth, 2);

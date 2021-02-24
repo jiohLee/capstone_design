@@ -18,10 +18,10 @@ LaneDetection::LaneDetection(ros::NodeHandle & nh, ros::NodeHandle & pnh)
     pubTargetSteer = nh.advertise<std_msgs::Float64>("/lane_detection/target_steer", 1);
     pubOnLane = nh.advertise<std_msgs::String>("/lane_detection/on_lane", 1);
 
-    // save last image for transformation
+    // Save Last Image For Transformation
     pnh.param<bool>("save_last_img", bSaveLastImage, false);
 
-    // hsv color ranges
+    // HSV Color Ranges
     pnh.param<int>("red_hue_1_max", redHMax1, 10);
     pnh.param<int>("red_hue_1_min", redHMin1, 0);
     pnh.param<int>("red_hue_2_max", redHMax2, 179);
@@ -33,7 +33,7 @@ LaneDetection::LaneDetection(ros::NodeHandle & nh, ros::NodeHandle & pnh)
     pnh.param<int>("val_max", valMax, 255);
     pnh.param<int>("val_min", valMin, 120);
 
-    // Sliding Window params
+    // Sliding Window Params
     pnh.param<int>("window_width", windowWidth, 3);
     pnh.param<int>("window_num", windowNum, 3);
     pnh.param<int>("target_window_height", targetWindowHeight, 3);
