@@ -1,5 +1,5 @@
 <launch>
     <node pkg="decision_maker" type="decision_maker_node" name="decision_maker_node">
-		<param name="target_velocity" type="double" value="0.6"/>
+		<param name="target_velocity" type="double" value="1.0"/>
     </node>
 </launch>
