@@ -17,7 +17,6 @@ LaneDetection::LaneDetection(ros::NodeHandle & nh, ros::NodeHandle & pnh)
     subCompImg = nh.subscribe("usb_cam/image_raw/compressed", 1, &LaneDetection::imgCallback, this);
     pubTargetSteer = nh.advertise<std_msgs::Float64>("/lane_detection/target_steer", 1);
     pubOnLane = nh.advertise<std_msgs::String>("/lane_detection/on_lane", 1);
-    namedWindow("src", WINDOW_AUTOSIZE);
 
     // save last image for transformation
     pnh.param<bool>("save_last_img", bSaveLastImage, false);
