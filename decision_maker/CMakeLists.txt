@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
   std_msgs
+  pcl_ros
 )
 
 ## System dependencies are found with CMake's conventions
@@ -107,7 +108,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES decision_maker
-  CATKIN_DEPENDS ackermann_msgs geometry_msgs roscpp sensor_msgs std_msgs
+  CATKIN_DEPENDS ackermann_msgs geometry_msgs roscpp sensor_msgs std_msgs pcl_ros
 #  DEPENDS system_lib
 )
 
