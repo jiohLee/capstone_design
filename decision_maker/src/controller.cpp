@@ -4,7 +4,6 @@ Controller::Controller(ros::NodeHandle& nh, ros::NodeHandle& pnh)
 {
     pubAck = nh.advertise<ackermann_msgs::AckermannDriveStamped>("/ackermann_cmd", 1);
     subJoy = nh.subscribe("/joy", 1, &Controller::joyCallback, this);
-    ctrlTimer = nh.createTimer(ros::Duration(1.0 / 20.0), &Controller::ctrlTimerCallback, this);
 
     pnh.param<double>("accel", accel, 0.2);
     pnh.param<double>("steer_offset", steerOffset, 0.05);
@@ -93,7 +92,7 @@ void Controller::joyCallback(const sensor_msgs::Joy::ConstPtr &msg)
     }
 }
 
-void Controller::ctrlTimerCallback(const ros::TimerEvent &)
+void Controller::publishControlInput()
 {
     ros::Time currTime = ros::Time::now();
     double timeElapsed = currTime.toSec() - prevTime.toSec();
@@ -114,6 +113,7 @@ void Controller::ctrlTimerCallback(const ros::TimerEvent &)
     }
     printf("VELOCITY : %f [m/sec]\n", velocity);
     printf("STEER : %lf [rad]\n", steer);
+    printf("\n");
 
     ackermann_msgs::AckermannDriveStamped ackmsg;
     ackmsg.header.stamp = ros::Time::now();
@@ -126,8 +126,8 @@ void Controller::ctrlTimerCallback(const ros::TimerEvent &)
 
 void Controller::setVelocity(const double timeElapsedSec, const double accelMperSec)
 {
-
-    if(targetVelocity > velocity)
+    if(stop) velocity = 0;
+    else if(targetVelocity > velocity)
     {
         if ( velocity + (accelMperSec * timeElapsedSec) > targetVelocity)
         {
@@ -153,7 +153,6 @@ void Controller::setVelocity(const double timeElapsedSec, const double accelMper
         if (velocity < -1) velocity = -1;
         if (targetVelocity < -0.2 && velocity > -0.2 ) velocity = -0.2;
     }
-    if(stop) velocity = 0;
 }
 
 void Controller::setSteer(const double pGain, const double iGain, const double dGain)

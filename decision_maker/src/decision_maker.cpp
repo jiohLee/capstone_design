@@ -23,6 +23,7 @@ void DecisionMaker::timerCallback(const ros::TimerEvent &)
     steer = targetSteer;
 
     // stop when obstacle exist
+    bool obstacle = false;
     for(size_t i = 0; i < centeroids.size(); i++)
     {
         const pcl::PointXYZI& pt = centeroids[i];
@@ -31,8 +32,19 @@ void DecisionMaker::timerCallback(const ros::TimerEvent &)
                 (-0.25f < pt.y && pt.y < 0.25f)
                 )
         {
-            velocity = 0;
+            obstacle = true;
         }
+    }
+    if(obstacle)
+    {
+        velocity = 0;
+        printf("\033[0;33m");
+        printf("OBSTACLE AHEAD\n");
+        printf("\033[0;37m");
+    }
+    else
+    {
+        printf("OBSTACLE FREE\n");
     }
 
     if(!ctrl.isMenual())
@@ -40,6 +52,7 @@ void DecisionMaker::timerCallback(const ros::TimerEvent &)
         ctrl.setTargetVelocity(velocity);
         ctrl.setTargetSteer(steer);
     }
+    ctrl.publishControlInput();
 }
 
 void DecisionMaker::targetSteerCallback(const std_msgs::Float64::ConstPtr &msg)

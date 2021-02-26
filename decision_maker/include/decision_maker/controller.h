@@ -18,11 +18,11 @@ public:
     bool isMenual() {return menual;}
     void brake() {stop = true;}
     void go() {stop = false;}
+    void publishControlInput();
 private:
 
     // ROS Callbacks
     void joyCallback(const sensor_msgs::Joy::ConstPtr & msg);
-    void ctrlTimerCallback(const ros::TimerEvent& event);
 
     // ROS Services
     ros::Subscriber subJoy;
