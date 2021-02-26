@@ -47,6 +47,16 @@ void Controller::setTargetSteer(const double target)
     if(target > steerMax) targetSteer = steerMax;
     else if(target < -steerMax) targetSteer = -steerMax;
     else targetSteer = target;
+
+    if(steeringError.size() < queueSize)
+    {
+        steeringError.push_back(target);
+    }
+    else
+    {
+        steeringError.pop_front();
+        steeringError.push_back(target);
+    }
 }
 
 void Controller::joyCallback(const sensor_msgs::Joy::ConstPtr &msg)

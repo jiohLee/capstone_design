@@ -28,7 +28,7 @@ void DecisionMaker::timerCallback(const ros::TimerEvent &)
     {
         const pcl::PointXYZI& pt = centeroids[i];
         if(
-                (0.0f < pt.x && pt.x < 2.0f) &&
+                (0.0f < pt.x && pt.x < 0.5f) &&
                 (-0.25f < pt.y && pt.y < 0.25f)
                 )
         {
@@ -46,7 +46,7 @@ void DecisionMaker::timerCallback(const ros::TimerEvent &)
     {
         printf("OBSTACLE FREE\n");
     }
-
+    std::cout << "velocity, steer | " << velocity << " " << steer << "\n";
     if(!ctrl.isMenual())
     {
         ctrl.setTargetVelocity(velocity);
