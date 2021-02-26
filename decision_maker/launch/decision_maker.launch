@@ -1,5 +1,5 @@
 <launch>
-    <node pkg="decision_maker" type="decision_maker_node" name="decision_maker_node">
+    <node pkg="decision_maker" type="decision_maker_node" name="decision_maker_node" output="screen">
 		    <param name="target_velocity" type="double" value="1.0"/>
 
         <!-- controller param -->
@@ -10,4 +10,5 @@
         <param name="d_gain" type="double" value="1.0"/>
         <param name="menual_start" type="bool" value="true"/>
     </node>
+    <node pkg="joy" type="joy_node" name="joy_node"/>
 </launch>
