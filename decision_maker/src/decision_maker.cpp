@@ -38,15 +38,13 @@ void DecisionMaker::timerCallback(const ros::TimerEvent &)
     if(obstacle)
     {
         velocity = 0;
-        printf("\033[0;33m");
-        printf("OBSTACLE AHEAD\n");
-        printf("\033[0;37m");
+        ROS_WARN("OBSTACLE AHEAD");
     }
     else
     {
-        printf("OBSTACLE FREE\n");
+        ROS_INFO("OBSTACLE FREE");
     }
-    std::cout << "velocity, steer | " << velocity << " " << steer << "\n";
+
     if(!ctrl.isMenual())
     {
         ctrl.setTargetVelocity(velocity);

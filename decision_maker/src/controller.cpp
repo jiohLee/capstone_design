@@ -110,19 +110,17 @@ void Controller::publishControlInput()
     setVelocity(timeElapsed, accel);
     setSteer(pGain, iGain, dGain);
 
-    printf("DURATION : %f [sec]\n", timeElapsed);
     if(menual)
     {
-        printf("CONTROL : %s\n", std::string("MENUAL").c_str());
+        ROS_INFO("CONTROL : %s", std::string("MENUAL").c_str());
     }
     else
     {
-        printf("\033[0;33m");
-        printf("CONTROL : %s\n", std::string("AUTO").c_str());
-        printf("\033[0;37m");
+        ROS_WARN("CONTROL : %s", std::string("AUTO").c_str());
     }
-    printf("VELOCITY : %f [m/sec]\n", velocity);
-    printf("STEER : %lf [rad]\n", steer);
+    ROS_INFO("VELOCITY : %f [m/sec]", velocity);
+    ROS_INFO("STEER : %lf [rad]", steer);
+    ROS_INFO("DURATION : %f [sec]\n", timeElapsed);
     printf("\n");
 
     ackermann_msgs::AckermannDriveStamped ackmsg;
