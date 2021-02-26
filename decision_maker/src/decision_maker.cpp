@@ -2,8 +2,8 @@
 #include <geometry_msgs/Twist.h>
 
 DecisionMaker::DecisionMaker(ros::NodeHandle & nh, ros::NodeHandle & pnh)
+    :ctrl(nh, pnh)
 {
-    pubCmdVel = nh.advertise<geometry_msgs::Twist>("/decision_maker/cmd_vel", 1);
     subTargetSteer = nh.subscribe("/lane_detection/target_steer", 1, &DecisionMaker::targetSteerCallback, this);
     subOnLane = nh.subscribe("/lane_detection/on_lane", 1, &DecisionMaker::onLaneCallback, this);
     subObstacle = nh.subscribe("/obstacle_detection/point_cloud_cluster_centeroids", 1, &DecisionMaker::obstacleCallback, this);
@@ -19,13 +19,27 @@ DecisionMaker::DecisionMaker(ros::NodeHandle & nh, ros::NodeHandle & pnh)
 void DecisionMaker::timerCallback(const ros::TimerEvent &)
 {
     geometry_msgs::Twist target;
-
-
-
     velocity = targetVel;
-    target.linear.x = velocity;
-    target.angular.z = targetSteer;
-    pubCmdVel.publish(target);
+    steer = targetSteer;
+
+    // stop when obstacle exist
+    for(size_t i = 0; i < centeroids.size(); i++)
+    {
+        const pcl::PointXYZI& pt = centeroids[i];
+        if(
+                (0.0f < pt.x && pt.x < 2.0f) &&
+                (-0.25f < pt.y && pt.y < 0.25f)
+                )
+        {
+            velocity = 0;
+        }
+    }
+
+    if(!ctrl.isMenual())
+    {
+        ctrl.setTargetVelocity(velocity);
+        ctrl.setTargetSteer(steer);
+    }
 }
 
 void DecisionMaker::targetSteerCallback(const std_msgs::Float64::ConstPtr &msg)

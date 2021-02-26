@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(find rplidar_ros)/launch/rplidar.launch"></include>
+    <include file="$(find obstacle_detection)/launch/obstacle_detection.launch"></include>
+</launch>

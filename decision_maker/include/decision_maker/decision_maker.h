@@ -15,6 +15,8 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
+#include "decision_maker/controller.h"
+
 class DecisionMaker
 {
 public:
@@ -28,7 +30,7 @@ private:
     void onLaneCallback(const std_msgs::String::ConstPtr& msg);
 
     // ROS Service
-    ros::Publisher pubCmdVel;
+//    ros::Publisher pubCmdVel;
     ros::Subscriber subTargetSteer;
     ros::Subscriber subObstacle;
     ros::Subscriber subOnLane;
@@ -37,19 +39,22 @@ private:
     // LaneType
     enum OnLaneType
     {
-        ON_LANE_LEFT = 0,
-        ON_LANE_RIGHT
+        ON_LANE_LEFT = 1,
+        ON_LANE_RIGHT = -1
     };
     enum GoLaneType
     {
-        GO_LANE_LEFT = 0,
-        GO_LANE_RIGHT
+        GO_LANE_LEFT = 1,
+        GO_LANE_RIGHT = -1
     };
 
     // Variables
+    Controller ctrl;
+
     double targetVel;
     double targetSteer;
     double velocity;
+    double steer;
 
     OnLaneType onLane;
     OnLaneType currentLane;

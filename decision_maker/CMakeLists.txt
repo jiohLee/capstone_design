@@ -154,6 +154,7 @@ include_directories(
 # )
 
  add_executable(decision_maker_node
+     src/controller.cpp
      src/decision_maker_node.cpp
      src/decision_maker.cpp
      )
