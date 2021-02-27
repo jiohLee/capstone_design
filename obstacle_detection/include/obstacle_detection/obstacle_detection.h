@@ -70,6 +70,8 @@ private:
     int maxClusterSize;
     double clusterTolerance;
 
+    bool showSource;
+
     // Functions
     void scan2pointCloud(const sensor_msgs::LaserScan& input, pcl::PointCloud<pcl::PointXYZI> & dst);
     void setROI(const pcl::PointCloud<pcl::PointXYZI> & input, pcl::PointCloud<pcl::PointXYZI> & dst);

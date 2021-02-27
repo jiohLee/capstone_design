@@ -53,6 +53,9 @@ private:
     int windowNum;
     int targetWindowHeight;
 
+    bool showSource;
+    bool showSlidingWindow;
+
     // Functions
     void getSlidingWindow(Mat& input, std::vector<Point>& centeroids, int windowWidth, int windowNum);
     void drawSlidingWindow(Mat& input, std::vector<Point>& centeroids, int windowWidth);

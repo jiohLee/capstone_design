@@ -40,6 +40,9 @@ LaneDetection::LaneDetection(ros::NodeHandle & nh, ros::NodeHandle & pnh)
     pnh.param<int>("window_num", windowNum, 3);
     pnh.param<int>("target_window_height", targetWindowHeight, 3);
 
+    pnh.param<bool>("show_source", showSource, true);
+    pnh.param<bool>("show_sliding_window", showSlidingWindow, true);
+
     // Init Time Point
     timePointPrev = ros::Time::now();
 }
@@ -131,8 +134,8 @@ void LaneDetection::imgCallback(const sensor_msgs::CompressedImage::ConstPtr & m
     line(slidingWindowImg, Point(slidingWindowImg.cols / 2 + 200, targetWayPoint.y - 20), Point(slidingWindowImg.cols / 2 + 200, targetWayPoint.y + 20), Scalar(0, 255, 255), 1);
     circle(slidingWindowImg, targetWayPoint, 2, Scalar(0,0,255), -1);
 
-    imshow("Source", src);
-    imshow("Sliding Window", slidingWindowImg);
+    if(showSource) imshow("Source", src);
+    if(showSlidingWindow) imshow("Sliding Window", slidingWindowImg);
 
     timePointElapsed = ros::Time::now().toSec() - timePointPrev.toSec();
     timePointPrev = ros::Time::now();

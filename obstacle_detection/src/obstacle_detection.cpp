@@ -33,6 +33,8 @@ ObstacleDetection::ObstacleDetection(ros::NodeHandle &nh, ros::NodeHandle &pnh)
     pnh.param<int>("min_cluster_size", minClusterSize, 2);
     pnh.param<int>("max_cluster_size", maxClusterSize, 400);
     pnh.param<double>("cluster_tolerance", clusterTolerance, 0.1);
+
+    pnh.param<bool>("show_source", showSource, false);
 }
 
 void ObstacleDetection::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr &msg)
@@ -107,7 +109,7 @@ void ObstacleDetection::imgCallback(const sensor_msgs::CompressedImage::ConstPtr
     cvPtr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
     src = cvPtr->image;
 
-    imshow("obstacle image", src);
+    if(showSource) imshow("obstacle image", src);
 
     waitKey(1);
 }
