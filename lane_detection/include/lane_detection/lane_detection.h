@@ -24,6 +24,9 @@ private:
     void imgCallback(const sensor_msgs::CompressedImage::ConstPtr & msg);
 
     // ROS Service
+    ros::NodeHandle & nh;
+    ros::NodeHandle & pnh;
+
     ros::Subscriber subCompImg;
     ros::Publisher pubTargetSteer;
     ros::Publisher pubOnLane;

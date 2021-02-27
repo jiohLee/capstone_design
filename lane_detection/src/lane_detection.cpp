@@ -11,10 +11,12 @@ constexpr int left_high = 230;
 constexpr int left_low = 100;
 
 LaneDetection::LaneDetection(ros::NodeHandle & nh, ros::NodeHandle & pnh)
-    :srcTri({Point2f(left_high, 0), Point2f(col__ - left_high, 0), Point2f(left_low, row__), Point2f(col__ - left_low, row__)}) // before perspective transform
-    ,dstTri({Point2f(left_high, 0), Point2f(col__ - left_high, 0), Point2f(left_high, row__), Point2f(col__ - left_high, row__)})// after perspective transform
+    : nh(nh)
+    , pnh(pnh)
+    , srcTri({Point2f(left_high, 0), Point2f(col__ - left_high, 0), Point2f(left_low, row__), Point2f(col__ - left_low, row__)}) // before perspective transform
+    , dstTri({Point2f(left_high, 0), Point2f(col__ - left_high, 0), Point2f(left_high, row__), Point2f(col__ - left_high, row__)})// after perspective transform
 {
-    subCompImg = nh.subscribe("usb_cam/image_raw/compressed", 1, &LaneDetection::imgCallback, this);
+    subCompImg = nh.subscribe("usb_cam_1/image_raw/compressed", 1, &LaneDetection::imgCallback, this);
     pubTargetSteer = nh.advertise<std_msgs::Float64>("/lane_detection/target_steer", 1);
     pubOnLane = nh.advertise<std_msgs::String>("/lane_detection/on_lane", 1);
 

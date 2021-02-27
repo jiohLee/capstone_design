@@ -1,5 +1,7 @@
 #include <math.h>
 
+#include <cv_bridge/cv_bridge.h>
+
 #include "obstacle_detection/obstacle_detection.h"
 
 template <typename T>
@@ -14,12 +16,12 @@ constexpr T deg2rad(T x)
     return static_cast<T>(static_cast<double>(x) * M_PI / 180.0);
 }
 
-
 ObstacleDetection::ObstacleDetection(ros::NodeHandle &nh, ros::NodeHandle &pnh)
     :nh(nh)
     ,pnh(pnh)
 {
     subScan = nh.subscribe("/scan", 1, &ObstacleDetection::laserScanCallback, this);
+    subCompImg = nh.subscribe("/usb_cam_2/image_raw/compressed",1 , &ObstacleDetection::imgCallback, this);
     pubPcd = nh.advertise<sensor_msgs::PointCloud2>("/obstacle_detection/point_cloud", 1);
     pubPcdFiltered = nh.advertise<sensor_msgs::PointCloud2>("/obstacle_detection/point_cloud_filtered", 1);
     pubClusters = nh.advertise<sensor_msgs::PointCloud2>("/obstacle_detection/point_cloud_cluster", 1);
@@ -97,6 +99,17 @@ void ObstacleDetection::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr
 
     ROS_INFO("seq : %d", scan.header.seq);
     ROS_INFO("cluster size : %d\n", static_cast<int>(clusterNum));
+}
+
+void ObstacleDetection::imgCallback(const sensor_msgs::CompressedImage::ConstPtr &msg)
+{
+    cv_bridge::CvImagePtr cvPtr;
+    cvPtr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+    src = cvPtr->image;
+
+    imshow("obstacle image", src);
+
+    waitKey(1);
 }
 
 void ObstacleDetection::scan2pointCloud(const sensor_msgs::LaserScan& input, pcl::PointCloud<pcl::PointXYZI> & dst)

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.0.2)
 project(obstacle_detection)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+ add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -14,7 +14,14 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   pcl_ros
   laser_geometry
+  cv_bridge
+  image_transport
 )
+
+find_package(OpenCV 4.2.0 REQUIRED)
+
+message("opencv libraries directory : ${OpenCV_INCLUDE_DIRS}")
+message("opencv version : ${OpenCV_VERSION}")
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -108,7 +115,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES obstacle_detection
-#  CATKIN_DEPENDS pcl_ros roscpp sensor_msgs std_msgs
+  CATKIN_DEPENDS roscpp std_msgs sensor_msgs geometry_msgs pcl_ros laser_geometry cv_bridge image_transport
 #  DEPENDS system_lib
 )
 
@@ -160,6 +167,7 @@ include_directories(
      )
  target_link_libraries(${PROJECT_NAME}_node
    ${catkin_LIBRARIES}
+   ${OpenCV_LIBRARIES}
  )
 
 #############
