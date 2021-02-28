@@ -70,6 +70,18 @@ private:
     int maxClusterSize;
     double clusterTolerance;
 
+    int hueMax;
+    int hueMin;
+    int satMax;
+    int satMin;
+    int valMax;
+    int valMin;
+
+    double camAngleLR;     // deg
+    double camAngleUD;     // deg
+    double xDistCamLidar;  // m
+    double zDistCamLidar;  // m
+
     bool showSource;
 
     // Functions
@@ -79,6 +91,13 @@ private:
 
     // Variables
     Mat src;
+
+    int clustersNum;
+    pcl::PointCloud<pcl::PointXYZI> pclClusters;
+    pcl::PointCloud<pcl::PointXYZI> pclCenteroids;
+
+    ros::Time timePointPrev;
+    double timePointElapsed;
 };
 
 #endif // OBSTACLE_DETECTION_H

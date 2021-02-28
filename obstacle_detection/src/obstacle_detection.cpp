@@ -34,7 +34,23 @@ ObstacleDetection::ObstacleDetection(ros::NodeHandle &nh, ros::NodeHandle &pnh)
     pnh.param<int>("max_cluster_size", maxClusterSize, 400);
     pnh.param<double>("cluster_tolerance", clusterTolerance, 0.1);
 
+    pnh.param<int>("hue_max", hueMax, 80);
+    pnh.param<int>("hue_min", hueMin, 60);
+    pnh.param<int>("sat_max", satMax, 255);
+    pnh.param<int>("sat_min", satMin, 40);
+    pnh.param<int>("val_max", valMax, 255);
+    pnh.param<int>("val_min", valMin, 40);
+
+
+    pnh.param<double>("camera_angle_left_right", camAngleLR, 70);
+    pnh.param<double>("camera_angle_up_down", camAngleUD, 75);
+    pnh.param<double>("x_distance_camera_to_lidar", xDistCamLidar, 0.15);
+    pnh.param<double>("z_distance_camera_to_lidar", zDistCamLidar, 0.06);
+
     pnh.param<bool>("show_source", showSource, false);
+
+    timePointElapsed = 0;
+    timePointPrev = ros::Time::now();
 }
 
 void ObstacleDetection::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr &msg)
@@ -57,14 +73,14 @@ void ObstacleDetection::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr
 
     // clustering
     std::vector<pcl::PointCloud<pcl::PointXYZI>> pclClusterVector;
-    int clusterNum = 0;
     if (pclCloudFiltered.size() != 0)
     {
-        clusterNum = clustering(pclCloudFiltered.makeShared(), pclClusterVector);
+        clustersNum = clustering(pclCloudFiltered.makeShared(), pclClusterVector);
     }
 
     // merge pcl cluster vector to single cloud
-    pcl::PointCloud<pcl::PointXYZI> pclClusters;
+//    pcl::PointCloud<pcl::PointXYZI> pclClusters;
+    pclClusters.clear();
     pclClusters.header = pclCloudFiltered.header;
     for (size_t i = 0; i < pclClusterVector.size(); i++)
     {
@@ -78,7 +94,8 @@ void ObstacleDetection::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr
     pubClusters.publish(clusters); // publish clusterd point cloud
 
     // get centeroid of point cloud;
-    pcl::PointCloud<pcl::PointXYZI> pclCenteroids;
+//    pcl::PointCloud<pcl::PointXYZI> pclCenteroids;
+    pclCenteroids.clear();
     pclCenteroids.header = pclClusters.header;
 
     for (size_t i = 0; i < pclClusterVector.size(); i++)
@@ -99,8 +116,11 @@ void ObstacleDetection::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr
     pcl::toROSMsg(pclCenteroids, centeroids);
     pubCenteroids.publish(centeroids); // publish centeroids of clusters
 
+    timePointElapsed = ros::Time::now().toSec() - timePointPrev.toSec();
+    timePointPrev = ros::Time::now();
+    ROS_INFO("ELAPSED : %lf [ms]", timePointElapsed * 1000);
     ROS_INFO("seq : %d", scan.header.seq);
-    ROS_INFO("cluster size : %d\n", static_cast<int>(clusterNum));
+    ROS_INFO("cluster size : %d\n", static_cast<int>(clustersNum));
 }
 
 void ObstacleDetection::imgCallback(const sensor_msgs::CompressedImage::ConstPtr &msg)
@@ -109,8 +129,45 @@ void ObstacleDetection::imgCallback(const sensor_msgs::CompressedImage::ConstPtr
     cvPtr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
     src = cvPtr->image;
 
-    if(showSource) imshow("obstacle image", src);
+    Mat hsv;
+    Mat srcBin = Mat::zeros(src.size(), src.type());
+    cvtColor(src, hsv, COLOR_BGR2HSV);
+    inRange(hsv, Scalar(hueMin, satMin, valMin), Scalar(hueMax, satMax, valMax),srcBin);
+    imshow("bin", srcBin);
 
+    std::vector<Vec3b> colors(static_cast<size_t>(clustersNum));
+    for(size_t i = 0; i < static_cast<size_t>(clustersNum); i++)
+    {
+        unsigned char B = static_cast<unsigned char>(255 / static_cast<unsigned long>(clustersNum) * (i + 1));
+        unsigned char G = static_cast<unsigned char>(255 / static_cast<unsigned long>(clustersNum) * (i + 2));
+        unsigned char R = static_cast<unsigned char>(255 / static_cast<unsigned long>(clustersNum) * (i + 3));
+        colors[i] = Vec3b(B, G, R);
+    }
+
+    Mat prj = src.clone();
+
+    for(size_t i = 0; i < pclClusters.size(); i++)
+    {
+        Point imgPt;
+        pcl::PointXYZI & lPt = pclClusters[i];
+        if(lPt.x < 0) continue;
+        int ctRow = prj.rows / 2;
+        int ctCol = prj.cols / 2;
+
+        double kY = ctRow / ((std::tan(deg2rad(90 - camAngleUD)) * (static_cast<double>(lPt.x) - xDistCamLidar)));
+        double kX = ctCol / ((std::tan(deg2rad(90 - camAngleLR)) * (static_cast<double>(lPt.x) - xDistCamLidar)));
+
+        imgPt.y = static_cast<int>(ctRow - kY * zDistCamLidar);
+        imgPt.x = static_cast<int>(ctCol - kX * static_cast<double>(lPt.y));
+
+        double dist = std::sqrt(std::pow(lPt.x,2) + std::pow(lPt.y,1));
+        int radius = static_cast<int>(4 / dist);
+        if(radius <= 0) radius = 1;
+
+        if(Rect(0,0,prj.cols, prj.rows).contains(imgPt)) circle(prj, imgPt, radius, colors[static_cast<size_t>(lPt.intensity)], -1);
+    }
+
+    if(showSource) imshow("obstacle image", prj);
     waitKey(1);
 }
 
