@@ -15,9 +15,9 @@
         <param name="val_min" type="int" value="20"/>
 
         <param name="camera_angle_left_right" type="double" value="58"/>
-        <param name="camera_angle_up_down" type="double" value="68"/>
-        <param name="x_distance_camera_to_lidar" type="double" value="0.10"/>
-        <param name="z_distance_camera_to_lidar" type="double" value="0.05"/>
+        <param name="camera_angle_up_down" type="double" value="74"/>
+        <param name="x_distance_camera_to_lidar" type="double" value="0.15"/>
+        <param name="z_distance_camera_to_lidar" type="double" value="0.06"/>
 
         <param name="show_source" type="bool" value="true"/>
     </node>

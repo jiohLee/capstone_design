@@ -127,7 +127,7 @@ void ObstacleDetection::imgCallback(const sensor_msgs::CompressedImage::ConstPtr
 {
     cv_bridge::CvImagePtr cvPtr;
     cvPtr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
-    src = cvPtr->image;
+    Mat src = cvPtr->image;
 
     Mat hsv;
     Mat srcBin = Mat::zeros(src.size(), src.type());
