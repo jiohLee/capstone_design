@@ -118,16 +118,10 @@ void ObstacleDetection::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr
 
     timePointElapsed = ros::Time::now().toSec() - timePointPrev.toSec();
     timePointPrev = ros::Time::now();
+
     ROS_INFO("ELAPSED : %lf [ms]", timePointElapsed * 1000);
     ROS_INFO("seq : %d", scan.header.seq);
     ROS_INFO("cluster size : %d\n", static_cast<int>(clustersNum));
-}
-
-void ObstacleDetection::imgCallback(const sensor_msgs::CompressedImage::ConstPtr &msg)
-{
-    cv_bridge::CvImagePtr cvPtr;
-    cvPtr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
-    Mat src = cvPtr->image;
 
     Mat hsv;
     Mat srcBin = Mat::zeros(src.size(), src.type());
@@ -169,6 +163,13 @@ void ObstacleDetection::imgCallback(const sensor_msgs::CompressedImage::ConstPtr
 
     if(showSource) imshow("obstacle image", prj);
     waitKey(1);
+}
+
+void ObstacleDetection::imgCallback(const sensor_msgs::CompressedImage::ConstPtr &msg)
+{
+    cv_bridge::CvImagePtr cvPtr;
+    cvPtr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+    src = cvPtr->image;
 }
 
 void ObstacleDetection::scan2pointCloud(const sensor_msgs::LaserScan& input, pcl::PointCloud<pcl::PointXYZI> & dst)

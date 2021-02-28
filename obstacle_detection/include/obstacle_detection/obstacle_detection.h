@@ -90,7 +90,7 @@ private:
     int clustering(const pcl::PointCloud<pcl::PointXYZI>::Ptr input, std::vector<pcl::PointCloud<pcl::PointXYZI>>& clusters);
 
     // Variables
-//    Mat src;
+    Mat src;
 
     int clustersNum;
     pcl::PointCloud<pcl::PointXYZI> pclClusters;
