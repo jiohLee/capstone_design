@@ -1,4 +1,22 @@
 <launch>
-    <include file="$(find rplidar_ros)/launch/rplidar.launch"></include>
     <include file="$(find obstacle_detection)/launch/obstacle_detection.launch"></include>
+
+    <!-- obstacle decetion camera -->
+    <node name="usb_cam_2" pkg="usb_cam" type="usb_cam_node" output="screen" >
+        <param name="video_device" value="/dev/video2" />
+        <param name="image_width" value="864" />
+        <param name="image_height" value="480" />
+        <param name="pixel_format" value="yuyv" />
+        <param name="camera_frame_id" value="usb_cam" />
+        <param name="io_method" value="mmap"/>
+    </node>
+
+    <!-- 2D Lidar -->
+    <node name="rplidarNode" pkg="rplidar_ros" type="rplidarNode" output="screen">
+        <param name="serial_port" type="string" value="/dev/ttyUSB0"/>  
+        <param name="serial_baudrate" type="int" value="115200"/>
+        <param name="frame_id" type="string" value="laser"/>
+        <param name="inverted"  type="bool" value="false"/>
+        <param name="angle_compensate" type="bool" value="true"/>
+    </node>
 </launch>
