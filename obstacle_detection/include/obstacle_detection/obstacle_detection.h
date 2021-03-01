@@ -5,6 +5,7 @@
 #include <sensor_msgs/LaserScan.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/CompressedImage.h>
+#include <std_msgs/UInt8MultiArray.h>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -61,6 +62,7 @@ private:
     sensor_msgs::PointCloud2 cloudFiltered;
     sensor_msgs::PointCloud2 clusters;
     sensor_msgs::PointCloud2 centeroids;
+    std_msgs::UInt8MultiArray classify;
 
     // ROS Parameter
     double boxHeight;
@@ -88,6 +90,24 @@ private:
     void scan2pointCloud(const sensor_msgs::LaserScan& input, pcl::PointCloud<pcl::PointXYZI> & dst);
     void setROI(const pcl::PointCloud<pcl::PointXYZI> & input, pcl::PointCloud<pcl::PointXYZI> & dst);
     int clustering(const pcl::PointCloud<pcl::PointXYZI>::Ptr input, std::vector<pcl::PointCloud<pcl::PointXYZI>>& clusters);
+    void erodeAndDilate(Mat &input, int shape, Size kSize, int repeat);
+    void lidarPoint2ImagePoint(const pcl::PointXYZI& lPt, Point & iPt);
+
+    // Connected Component Index
+    enum StatsIdx
+    {
+        LEFT_TOP_X = 0,
+        LEFT_TOP_Y,
+        WIDTH,
+        HEIGHT,
+        PIXELS
+    };
+
+    enum CenteroidIdx
+    {
+        CENTER_X = 0,
+        CENTER_Y
+    };
 
     // Variables
     Mat src;

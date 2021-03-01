@@ -1,6 +1,6 @@
 <launch>
     <node pkg="obstacle_detection" type="obstacle_detection_node" name="obstacle_detection_node">
-        <param name="box_height" type="double" value="4" />
+        <param name="box_height" type="double" value="5" />
         <param name="box_width" type="double" value="2" />
 
         <param name="cluster_tolerance" type="double" value="0.1" />
@@ -12,7 +12,7 @@
         <param name="sat_max" type="int" value="255"/>
         <param name="sat_min" type="int" value="50"/>
         <param name="val_max" type="int" value="255"/>
-        <param name="val_min" type="int" value="20"/>
+        <param name="val_min" type="int" value="0"/>
 
         <param name="camera_angle_left_right" type="double" value="58"/>
         <param name="camera_angle_up_down" type="double" value="74"/>
