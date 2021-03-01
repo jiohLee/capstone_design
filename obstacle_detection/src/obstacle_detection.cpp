@@ -48,6 +48,7 @@ ObstacleDetection::ObstacleDetection(ros::NodeHandle &nh, ros::NodeHandle &pnh)
     pnh.param<double>("z_distance_camera_to_lidar", zDistCamLidar, 0.06);
 
     pnh.param<bool>("show_source", showSource, false);
+    pnh.param<bool>("show_binary", showBinary, false);
 
     timePointElapsed = 0;
     timePointPrev = ros::Time::now();
@@ -133,7 +134,7 @@ void ObstacleDetection::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr
         cvtColor(src, hsv, COLOR_BGR2HSV);
         inRange(hsv, Scalar(hueMin, satMin, valMin), Scalar(hueMax, satMax, valMax),srcBin);
         erodeAndDilate(srcBin, MORPH_RECT, Size(10,10), 3);
-        imshow("bin", srcBin);
+        if(showBinary) imshow("bin", srcBin);
 
         Mat labels;
         Mat stats;

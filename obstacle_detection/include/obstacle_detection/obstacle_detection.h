@@ -85,6 +85,7 @@ private:
     double zDistCamLidar;  // m
 
     bool showSource;
+    bool showBinary;
 
     // Functions
     void scan2pointCloud(const sensor_msgs::LaserScan& input, pcl::PointCloud<pcl::PointXYZI> & dst);
