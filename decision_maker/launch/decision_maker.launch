@@ -1,6 +1,6 @@
 <launch>
     <node pkg="decision_maker" type="decision_maker_node" name="decision_maker_node" output="screen">
-		    <param name="target_velocity" type="double" value="0.6"/>
+		    <param name="target_velocity" type="double" value="0.4"/>
 
         <!-- controller param -->
         <param name="accel" type="double" value="0.2"/>
