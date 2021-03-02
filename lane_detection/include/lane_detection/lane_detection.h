@@ -86,6 +86,9 @@ private:
     std::vector<Point2f> srcTri;
     std::vector<Point2f> dstTri;
 
+    std::vector<Point> centeroidsYellow;
+    std::vector<Point> centeroidsRed;
+
     ros::Time timePointPrev;
     double timePointElapsed;
 };
