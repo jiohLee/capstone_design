@@ -7,6 +7,6 @@
         <param name="min_cluster_size" type="int" value="4" />
         <param name="max_cluster_size" type="int" value="400" />
 
-        <param name="show_source" type="bool" value="true"/>
+        <param name="show_source" type="bool" value="false"/>
     </node>
 </launch>
