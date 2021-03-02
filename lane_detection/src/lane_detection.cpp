@@ -221,7 +221,11 @@ void LaneDetection::getSlidingWindow(Mat &input, std::vector<Point> &centeroids,
 
         if(cnt == 0)
         {
-            centerX = static_cast<int>(centeroids[i].x - roi.x);
+            if(i > 1)
+            {
+                double pre = (centeroids[i - 1].x + centeroids[i - 2].x) / 2;
+                centerX = static_cast<int>(((centeroids[i].x + pre) / 2) - roi.x);
+            }
         }
         else
         {
