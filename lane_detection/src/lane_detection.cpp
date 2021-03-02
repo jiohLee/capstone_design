@@ -43,6 +43,9 @@ LaneDetection::LaneDetection(ros::NodeHandle & nh, ros::NodeHandle & pnh)
     pnh.param<bool>("show_source", showSource, true);
     pnh.param<bool>("show_sliding_window", showSlidingWindow, true);
 
+    centeroidsRed.resize(static_cast<size_t>(windowNum));
+    centeroidsYellow.resize(static_cast<size_t>(windowNum));
+
     // Init Time Point
     timePointPrev = ros::Time::now();
 }
@@ -95,8 +98,8 @@ void LaneDetection::imgCallback(const sensor_msgs::CompressedImage::ConstPtr & m
     */
 
     // get centeroids of both lane;
-    std::vector<Point> centeroidsYellow;
-    std::vector<Point> centeroidsRed;
+//    std::vector<Point> centeroidsYellow;
+//    std::vector<Point> centeroidsRed;
     getSlidingWindow(topViewBinYellow, centeroidsYellow, windowWidth, windowNum);
     getSlidingWindow(topViewBinRed, centeroidsRed, windowWidth, windowNum);
 
@@ -183,8 +186,8 @@ void LaneDetection::getSlidingWindow(Mat &input, std::vector<Point> &centeroids,
         }
     }
 
-    centeroids.clear();
-    centeroids.reserve(static_cast<size_t>(tmpCenteroids.rows - 1));
+//    centeroids.clear();
+//    centeroids.reserve(static_cast<size_t>(tmpCenteroids.rows - 1));
     int windowHeight = input.rows / windowNum;
     Point lt(startX, windowHeight * (windowNum - 1));
     Size windowSize(windowWidth, windowHeight);
@@ -218,14 +221,14 @@ void LaneDetection::getSlidingWindow(Mat &input, std::vector<Point> &centeroids,
 
         if(cnt == 0)
         {
-            if(i > 1) centerX = static_cast<int>(centeroids[i - 1].x + (centeroids[i - 1].x - centeroids[i - 2].x) - roi.x);
+            centerX = static_cast<int>(centeroids[i].x - roi.x);
         }
         else
         {
             centerX = sum / cnt;
         }
 
-        centeroids.emplace_back(centerX + roi.x, centerY + roi.y);
+        centeroids[i] = Point(centerX + roi.x, centerY + roi.y);
 
         roi.x += centerX - roi.width / 2;
         roi.y -= roi.height;
