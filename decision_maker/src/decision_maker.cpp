@@ -10,10 +10,13 @@ DecisionMaker::DecisionMaker(ros::NodeHandle & nh, ros::NodeHandle & pnh)
 
     timer = nh.createTimer(ros::Duration(1.0 / 20.0), &DecisionMaker::timerCallback, this);
     pnh.param<double>("target_velocity", targetVel, 0.8);
+    pnh.param<double>("curve_threshold_steer", curveThresholdSteer, 0.15);
+    pnh.param<double>("curve_threshold_time", curveThresholdTime, 0.5);
 
     goLane = GO_LANE_RIGHT;
 
     targetSteer = 0;
+    timePointLaneCheck = ros::Time::now();
 }
 
 void DecisionMaker::timerCallback(const ros::TimerEvent &)
@@ -21,6 +24,23 @@ void DecisionMaker::timerCallback(const ros::TimerEvent &)
     geometry_msgs::Twist target;
     velocity = targetVel;
     steer = targetSteer;
+
+    // check lane type
+    ros::Time timePointCurrent = ros::Time::now();
+    std::string laneTypeMsg = "UNKNOWN";
+    if(std::abs(targetSteer) > curveThresholdSteer)
+    {
+        timePointLaneCheck = ros::Time::now();
+        lane = LANE_CURVE;
+        laneTypeMsg = "CURVE";
+    }
+    if(timePointCurrent.toSec() - timePointLaneCheck.toSec() > curveThresholdTime)
+    {
+        lane = LANE_STRAIGHT;
+        laneTypeMsg = "STRAIGHT";
+    }
+    ROS_INFO("LANE : %s", laneTypeMsg.c_str());
+
 
     // stop when obstacle exist
     bool obstacle = false;

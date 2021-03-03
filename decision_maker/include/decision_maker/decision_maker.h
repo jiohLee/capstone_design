@@ -36,7 +36,12 @@ private:
     ros::Subscriber subOnLane;
     ros::Timer timer;
 
-    // LaneType
+    // ROS Param
+    double targetVel;
+    double curveThresholdSteer;
+    double curveThresholdTime;
+
+    // Enums
     enum OnLaneType
     {
         ON_LANE_LEFT = 1,
@@ -47,11 +52,15 @@ private:
         GO_LANE_LEFT = 1,
         GO_LANE_RIGHT = -1
     };
+    enum LaneType
+    {
+        LANE_CURVE = -1,
+        LANE_STRAIGHT = 1
+    };
 
     // Variables
     Controller ctrl;
 
-    double targetVel;
     double targetSteer;
     double velocity;
     double steer;
@@ -59,6 +68,9 @@ private:
     OnLaneType onLane;
     OnLaneType currentLane;
     GoLaneType goLane;
+    LaneType lane;
+    ros::Time timePointLaneCheck;
+
     pcl::PointCloud<pcl::PointXYZI> centeroids;
 };
 
