@@ -7,18 +7,20 @@
 #include <sensor_msgs/LaserScan.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/String.h>
-#include <std_msgs/UInt8MultiArray.h>
-#include <sensor_msgs/PointCloud2.h>
+//#include <std_msgs/UInt8MultiArray.h>
+//#include <sensor_msgs/PointCloud2.h>
 
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl_conversions/pcl_conversions.h>
-#include <pcl/conversions.h>
+//#include <pcl/point_cloud.h>
+//#include <pcl/point_types.h>
+//#include <pcl_conversions/pcl_conversions.h>
+//#include <pcl/conversions.h>
 
 #define _USE_MATH_DEFINES
 #include <math.h>
 
 #include "decision_maker/controller.h"
+
+#include <obstacle_msgs/Obstacle.h>
 
 class DecisionMaker
 {
@@ -29,17 +31,17 @@ private:
     // ROS Callbacks
     void timerCallback(const ros::TimerEvent& event);
     void targetSteerCallback(const std_msgs::Float64::ConstPtr& msg);
-    void obstacleCallback(const sensor_msgs::PointCloud2::ConstPtr& msg);
-    void classifyCallback(const std_msgs::UInt8MultiArray::ConstPtr& msg);
+    void obstacleCallback(const obstacle_msgs::Obstacle::ConstPtr& msg);
     void onLaneCallback(const std_msgs::String::ConstPtr& msg);
 
     // ROS Service
-//    ros::Publisher pubCmdVel;
     ros::Subscriber subTargetSteer;
     ros::Subscriber subObstacle;
-    ros::Subscriber subClassify;
     ros::Subscriber subOnLane;
     ros::Timer timer;
+
+    // ROS Messages
+    obstacle_msgs::Obstacle obstacles;
 
     // ROS Param
     double targetVel;
@@ -65,7 +67,7 @@ private:
 
     // Functions
     void switchLane();
-    bool isCarDetected(pcl::PointXYZI& point);
+    bool isCarDetected(geometry_msgs::Point& pt);
 
     // Variables
     Controller ctrl;
@@ -81,11 +83,10 @@ private:
     ros::Time timePointLaneCheck;
     ros::Time timePointStraightCheck;
 
-    pcl::PointCloud<pcl::PointXYZI> centeroids;
-    std::vector<uint8_t> classify;
-    pcl::PointXYZI carPoint;
-    pcl::PointXYZI carPointPrev;
     bool car;
+    bool updated;
+    geometry_msgs::Point carPoint;
+    geometry_msgs::Point carPointPrev;
 };
 
 #endif // DECISION_MAKER_H

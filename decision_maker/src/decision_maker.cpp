@@ -6,8 +6,7 @@ DecisionMaker::DecisionMaker(ros::NodeHandle & nh, ros::NodeHandle & pnh)
 {
     subTargetSteer = nh.subscribe("/lane_detection/target_steer", 1, &DecisionMaker::targetSteerCallback, this);
     subOnLane = nh.subscribe("/lane_detection/on_lane", 1, &DecisionMaker::onLaneCallback, this);
-    subObstacle = nh.subscribe("/obstacle_detection/point_cloud_cluster_centeroids", 1, &DecisionMaker::obstacleCallback, this);
-    subClassify = nh.subscribe("/obstacle_detection/point_cloud_cluster_class", 1, &DecisionMaker::classifyCallback, this);
+    subObstacle = nh.subscribe("/obstacle_detection/obstacle", 1, &DecisionMaker::obstacleCallback, this);
 
     timer = nh.createTimer(ros::Duration(1.0 / 20.0), &DecisionMaker::timerCallback, this);
     pnh.param<double>("target_velocity", targetVel, 0.8);
@@ -17,6 +16,7 @@ DecisionMaker::DecisionMaker(ros::NodeHandle & nh, ros::NodeHandle & pnh)
     goLane = GO_LANE_RIGHT; // start on the right lane
 
     car = false;
+    updated = false;
 
     targetSteer = 0;
     timePointLaneCheck = ros::Time::now();
@@ -45,32 +45,33 @@ void DecisionMaker::timerCallback(const ros::TimerEvent &)
     ROS_INFO("LANE : %s", laneTypeMsg.c_str());
 
     // check car ahead
-
-    if(!car)
+    if(updated)
     {
-        if(isCarDetected(carPoint))
+        if(!car)
         {
-            car = true;
-            ROS_INFO("CAR DETECTED");
+            if(isCarDetected(carPoint))
+            {
+                car = true;
+            }
+            ROS_INFO("CAR");
         }
         else
         {
-            ROS_INFO("NO CAR");
+            carPointPrev = carPoint;
+            if(isCarDetected(carPoint))
+            {
+                double relativeVelocity = (carPoint.x - carPointPrev.x) / 0.05;
+                ROS_INFO("CAR DETECTED, RELVEL : %lf", relativeVelocity);
+            }
+            else
+            {
+                ROS_INFO("NO CAR");
+            }
         }
     }
     else
     {
-        carPointPrev = carPoint;
-        if(isCarDetected(carPoint))
-        {
-            double relativeVelocity = (carPoint.x - carPointPrev.x) / 0.05;
-//            std::cout << carPoint << "\n" << carPointPrev << "\n";
-            ROS_INFO("CAR DETECTED, RELVEL : %lf", relativeVelocity);
-        }
-        else
-        {
-            ROS_INFO("NO CAR");
-        }
+        ROS_INFO("LIDAR NOT UPDATED");
     }
 
     // follow order
@@ -95,13 +96,12 @@ void DecisionMaker::timerCallback(const ros::TimerEvent &)
     }
 
     // estop
-    bool obstacle = false;
-    for(size_t i = 0; i < centeroids.size(); i++)
+    for(size_t i = 0; i < obstacles.centeroids.size(); i++)
     {
-        const pcl::PointXYZI& pt = centeroids[i];
+        const geometry_msgs::Point& pt = obstacles.centeroids[i];
         if(
-                (0.0f < pt.x && pt.x < 0.5f) &&
-                (-0.25f < pt.y && pt.y < 0.25f)
+                (0.0 < pt.x && pt.x < 0.5) &&
+                (-0.25 < pt.y && pt.y < 0.25)
                 )
         {
             velocity = 0;
@@ -114,6 +114,7 @@ void DecisionMaker::timerCallback(const ros::TimerEvent &)
         ctrl.setTargetSteer(steer);
     }
     ctrl.publishControlInput();
+    updated = false;
 }
 
 void DecisionMaker::targetSteerCallback(const std_msgs::Float64::ConstPtr &msg)
@@ -122,20 +123,10 @@ void DecisionMaker::targetSteerCallback(const std_msgs::Float64::ConstPtr &msg)
     targetSteer = steer.data;
 }
 
-void DecisionMaker::obstacleCallback(const sensor_msgs::PointCloud2::ConstPtr &msg)
+void DecisionMaker::obstacleCallback(const obstacle_msgs::Obstacle::ConstPtr &msg)
 {
-    const sensor_msgs::PointCloud2& pcd = *msg;
-    pcl::fromROSMsg(pcd, centeroids);
-}
-
-void DecisionMaker::classifyCallback(const std_msgs::UInt8MultiArray::ConstPtr &msg)
-{
-    const std_msgs::UInt8MultiArray & arr = *msg;
-    classify.clear();
-    for(size_t i = 0; i < arr.data.size(); i++)
-    {
-        classify.push_back(arr.data[i]);
-    }
+    updated = true;
+    obstacles = *msg;
 }
 
 void DecisionMaker::onLaneCallback(const std_msgs::String::ConstPtr &msg)
@@ -166,16 +157,15 @@ void DecisionMaker::switchLane()
     }
 }
 
-bool DecisionMaker::isCarDetected(pcl::PointXYZI& point)
+bool DecisionMaker::isCarDetected(geometry_msgs::Point &pt)
 {
-    for(size_t i = 0; i < classify.size(); i++)
+    for(size_t i = 0; i < obstacles.labels.size(); i++)
     {
-         if(classify[i] == 1) // car
-         {
-            point = centeroids[i];
-            std::cout << point << "\n";
+        if(obstacles.labels[i].data == 1)
+        {
+            pt = obstacles.centeroids[i];
             return true;
-         }
+        }
     }
     return false;
 }
