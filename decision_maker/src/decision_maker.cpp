@@ -24,7 +24,7 @@ DecisionMaker::DecisionMaker(ros::NodeHandle & nh, ros::NodeHandle & pnh)
 
 void DecisionMaker::timerCallback(const ros::TimerEvent &)
 {
-    geometry_msgs::Twist target;
+    // init values
     velocity = targetVel;
     steer = targetSteer;
 
@@ -44,34 +44,36 @@ void DecisionMaker::timerCallback(const ros::TimerEvent &)
     }
     ROS_INFO("LANE : %s", laneTypeMsg.c_str());
 
-    // check car ahead
-    if(updated)
+    if(isObstacleAhead(0, 1.0, onLane))
     {
-        if(!car)
+        geometry_msgs::Point pt;
+        if(isCarDetected(pt))
         {
-            if(isCarDetected(carPoint))
+            if(carPoint.x < 0.7 || std::abs(velocityRelative) <= 0.15)
             {
-                car = true;
+                switchLane();
             }
-            ROS_INFO("CAR");
         }
         else
         {
-            carPointPrev = carPoint;
-            if(isCarDetected(carPoint))
+            if(isObstacleAhead(0, 0.5, onLane))
             {
-                double relativeVelocity = (carPoint.x - carPointPrev.x) / 0.05;
-                ROS_INFO("CAR DETECTED, RELVEL : %lf", relativeVelocity);
-            }
-            else
-            {
-                ROS_INFO("NO CAR");
+                velocity = 0;
             }
         }
     }
     else
     {
-        ROS_INFO("LIDAR NOT UPDATED");
+        if(onLane == ON_LANE_LEFT)
+        {
+            if(!isObstacleAhead(1.5, -1.5, ON_LANE_LEFT))
+            {
+                if(lane == LANE_STRAIGHT)
+                {
+                    switchLane();
+                }
+            }
+        }
     }
 
     // follow order
@@ -89,6 +91,7 @@ void DecisionMaker::timerCallback(const ros::TimerEvent &)
             steer = GO_LANE_LEFT * 0.4;
         }
     }
+
     // slow down when curve appear
     if(lane == LANE_CURVE)
     {
@@ -96,16 +99,10 @@ void DecisionMaker::timerCallback(const ros::TimerEvent &)
     }
 
     // estop
-    for(size_t i = 0; i < obstacles.centeroids.size(); i++)
+
+    if(isObstacleAhead(0, 0.5, onLane))
     {
-        const geometry_msgs::Point& pt = obstacles.centeroids[i];
-        if(
-                (0.0 < pt.x && pt.x < 0.5) &&
-                (-0.25 < pt.y && pt.y < 0.25)
-                )
-        {
-            velocity = 0;
-        }
+        velocity = 0;
     }
 
     if(!ctrl.isMenual())
@@ -127,6 +124,28 @@ void DecisionMaker::obstacleCallback(const obstacle_msgs::Obstacle::ConstPtr &ms
 {
     updated = true;
     obstacles = *msg;
+
+    geometry_msgs::Point pt;
+    if(isCarDetected(pt))
+    {
+        if(!car)
+        {
+            car = true;
+            carPoint = pt;
+        }
+        else
+        {
+            carPointPrev = carPoint;
+            carPoint = pt;
+            double dur = ros::Time::now().toSec() - updateDur.toSec();
+            velocityRelative = (carPoint.x - carPointPrev.x) / dur;
+        }
+    }
+    else
+    {
+        car = false;
+    }
+    updateDur = ros::Time::now();
 }
 
 void DecisionMaker::onLaneCallback(const std_msgs::String::ConstPtr &msg)
@@ -164,6 +183,41 @@ bool DecisionMaker::isCarDetected(geometry_msgs::Point &pt)
         if(obstacles.labels[i].data == 1)
         {
             pt = obstacles.centeroids[i];
+            return true;
+        }
+    }
+    return false;
+}
+
+bool DecisionMaker::isObstacleAhead(double lowerRange, double upperRange, DecisionMaker::OnLaneType olt)
+{
+    double yRangeLeft = -0.25;
+    double yRangeRight = 0.25;
+    if(olt == ON_LANE_LEFT)
+    {
+        if(onLane == ON_LANE_RIGHT)
+        {
+            yRangeLeft += 0.4;
+            yRangeRight += 0.4;
+        }
+    }
+    else if(olt == ON_LANE_RIGHT)
+    {
+        if(onLane == ON_LANE_LEFT)
+        {
+            yRangeLeft -= 0.4;
+            yRangeRight -= 0.4;
+        }
+    }
+
+    for(size_t i = 0; i < obstacles.centeroids.size(); i++)
+    {
+        const geometry_msgs::Point& pt = obstacles.centeroids[i];
+        if(
+                (lowerRange < pt.x && pt.x < upperRange) &&
+                (yRangeLeft < pt.y && pt.y < yRangeRight)
+                )
+        {
             return true;
         }
     }

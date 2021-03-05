@@ -25,17 +25,6 @@
 
 #include <obstacle_msgs/Obstacle.h>
 
-//#include <pcl_ros/point_cloud.h>
-//#include <pcl/io/pcd_io.h>
-
-//#include <pcl/filters/extract_indices.h>
-//#include <visualization_msgs/MarkerArray.h>
-//#include <pcl/PointIndices.h>
-//#include <pcl/point_traits.h>
-//#include <pcl/common/impl/centroid.hpp>
-//#include <pcl/common/impl/common.hpp>
-//#include <pcl/pcl_base.h>
-
 using namespace cv;
 
 class ObstacleDetection

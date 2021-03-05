@@ -68,6 +68,7 @@ private:
     // Functions
     void switchLane();
     bool isCarDetected(geometry_msgs::Point& pt);
+    bool isObstacleAhead(double lowerRange, double upperRange, OnLaneType olt);
 
     // Variables
     Controller ctrl;
@@ -85,6 +86,8 @@ private:
 
     bool car;
     bool updated;
+    ros::Time updateDur;
+    double velocityRelative;
     geometry_msgs::Point carPoint;
     geometry_msgs::Point carPointPrev;
 };

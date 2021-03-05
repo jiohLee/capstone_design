@@ -185,6 +185,7 @@ void ObstacleDetection::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr
         }
         pubObstacles.publish(obstacles);
 
+        // projection to image coordinate
         std::vector<Vec3b> colors(static_cast<size_t>(clustersNum));
         for(size_t i = 0; i < static_cast<size_t>(clustersNum); i++)
         {
@@ -223,17 +224,8 @@ void ObstacleDetection::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr
             Point iPt;
             pcl::PointXYZI & lPt = pclClusters[i];
             if(lPt.x < 0) continue;
-//            int ctRow = prj.rows / 2;
-//            int ctCol = prj.cols / 2;
 
-//            double kY = ctRow / ((std::tan(deg2rad(90 - camAngleUD)) * (static_cast<double>(lPt.x) - xDistCamLidar)));
-//            double kX = ctCol / ((std::tan(deg2rad(90 - camAngleLR)) * (static_cast<double>(lPt.x) - xDistCamLidar)));
-
-//            iPt.y = static_cast<int>(ctRow - kY * zDistCamLidar);
-//            iPt.x = static_cast<int>(ctCol - kX * static_cast<double>(lPt.y));
             lidarPoint2ImagePoint(lPt, iPt);
-
-
             double dist = std::sqrt(std::pow(lPt.x,2) + std::pow(lPt.y,1));
             int radius = static_cast<int>(4 / dist);
             if(radius <= 0) radius = 1;
