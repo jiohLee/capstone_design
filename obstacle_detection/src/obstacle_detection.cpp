@@ -26,7 +26,7 @@ ObstacleDetection::ObstacleDetection(ros::NodeHandle &nh, ros::NodeHandle &pnh)
     pubPcdFiltered = nh.advertise<sensor_msgs::PointCloud2>("/obstacle_detection/point_cloud_filtered", 1);
     pubClusters = nh.advertise<sensor_msgs::PointCloud2>("/obstacle_detection/point_cloud_cluster", 1);
     pubCenteroids = nh.advertise<sensor_msgs::PointCloud2>("/obstacle_detection/point_cloud_cluster_centeroids", 1);
-    pubClassify = nh.advertise<std_msgs::UInt8MultiArray>("/obstacle_detection/point_cloud_cluster_class", 1);
+    pubObstacles = nh.advertise<obstacle_msgs::Obstacle>("/obstacle_detection/obstacle", 1);
 
     pnh.param<double>("box_height", boxHeight, 2);
     pnh.param<double>("box_width", boxWidth, 2);
@@ -54,8 +54,8 @@ ObstacleDetection::ObstacleDetection(ros::NodeHandle &nh, ros::NodeHandle &pnh)
     timePointElapsed = 0;
     timePointPrev = ros::Time::now();
 
-    classify.layout.dim.clear();
-    classify.data.clear();
+//    classify.layout.dim.clear();
+//    classify.data.clear();
 }
 
 void ObstacleDetection::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr &msg)
@@ -84,7 +84,6 @@ void ObstacleDetection::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr
     }
 
     // merge pcl cluster vector to single cloud
-//    pcl::PointCloud<pcl::PointXYZI> pclClusters;
     pclClusters.clear();
     pclClusters.header = pclCloudFiltered.header;
     for (size_t i = 0; i < pclClusterVector.size(); i++)
@@ -99,10 +98,8 @@ void ObstacleDetection::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr
     pubClusters.publish(clusters); // publish clusterd point cloud
 
     // get centeroid of point cloud;
-//    pcl::PointCloud<pcl::PointXYZI> pclCenteroids;
     pclCenteroids.clear();
     pclCenteroids.header = pclClusters.header;
-
     for (size_t i = 0; i < pclClusterVector.size(); i++)
     {
         const pcl::PointCloud<pcl::PointXYZI> & pclCluster = pclClusterVector[i];
@@ -117,7 +114,6 @@ void ObstacleDetection::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr
         pclCenteroid.y /= pclCluster.size();
         pclCenteroids.push_back(pclCenteroid);
     }
-
     pcl::toROSMsg(pclCenteroids, centeroids);
     pubCenteroids.publish(centeroids); // publish centeroids of clusters
 
@@ -143,9 +139,9 @@ void ObstacleDetection::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr
         connectedComponentsWithStats(srcBin, labels, stats, tmpCenteroids, 8);
 
         std::vector<Rect> rois;
+        std::vector<uint32_t> classify;
         rois.reserve(static_cast<size_t>(clustersNum));
-        classify.data.clear();
-        classify.data.reserve(static_cast<size_t>(clustersNum));
+        classify.reserve(static_cast<size_t>(clustersNum));
         int* statsPtr = nullptr;
         for (int r = 1; r < stats.rows; ++r)
         {
@@ -157,7 +153,7 @@ void ObstacleDetection::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr
         {
             Point iPt;
             const pcl::PointXYZI& lPt = pclCenteroids[i];
-            uint8_t cls = 0;
+            uint32_t cls = 0;
             lidarPoint2ImagePoint(lPt, iPt);
             for (size_t r = 0; r < rois.size(); r++)
             {
@@ -167,14 +163,27 @@ void ObstacleDetection::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr
                     cls = 1; // '1' means the obstacle is a car, otherwise unknown
                 }
             }
-            classify.data.push_back(cls);
+            classify.push_back(cls);
         }
 
-        for(size_t i =0; i < classify.data.size(); i++)
+        // publish to decision maker node
+        obstacles.centeroids.clear();
+        obstacles.centeroids.reserve(static_cast<size_t>(clustersNum));
+        obstacles.labels.clear();
+        obstacles.labels.reserve(static_cast<size_t>(clustersNum));
+        for(size_t i = 0; i < static_cast<size_t>(clustersNum); i++)
         {
-            printf("%d ", classify.data[i]);
-        }std::cout << "\n";
-        pubClassify.publish(classify);
+            const pcl::PointXYZI& lPt = pclCenteroids[i];
+            geometry_msgs::Point pt;
+            pt.x = static_cast<double>(lPt.x);
+            pt.y = static_cast<double>(lPt.y);
+            pt.z = 0.0;
+            obstacles.centeroids.push_back(pt);
+            std_msgs::UInt32 num;
+            num.data = classify[i];
+            obstacles.labels.push_back(num);
+        }
+        pubObstacles.publish(obstacles);
 
         std::vector<Vec3b> colors(static_cast<size_t>(clustersNum));
         for(size_t i = 0; i < static_cast<size_t>(clustersNum); i++)
@@ -198,11 +207,11 @@ void ObstacleDetection::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr
             {
                 lidarPoint2ImagePoint(lPt, iPt);
                 circle(prj, iPt, 5, Scalar(0,0,255), -1);
-                if(classify.data[static_cast<size_t>(lPt.intensity)] == 0) // obstacle
+                if(classify[static_cast<size_t>(lPt.intensity)] == 0) // obstacle
                 {
                     putText(prj, "OBSTACLE", iPt, 2, 1.2, Scalar(255,255,255));
                 }
-                else if(classify.data[static_cast<size_t>(lPt.intensity)] == 1) // car
+                else if(classify[static_cast<size_t>(lPt.intensity)] == 1) // car
                 {
                     putText(prj, "CAR", iPt, 2, 1.2, Scalar(255,255,255));
                 }
