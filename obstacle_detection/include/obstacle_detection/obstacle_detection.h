@@ -56,6 +56,7 @@ private:
     ros::Publisher pubPcdFiltered;
     ros::Publisher pubClusters;
     ros::Publisher pubCenteroids;
+    ros::Publisher pubClassify;
 
     // ROS Messages
     sensor_msgs::PointCloud2 cloud;

@@ -26,6 +26,7 @@ ObstacleDetection::ObstacleDetection(ros::NodeHandle &nh, ros::NodeHandle &pnh)
     pubPcdFiltered = nh.advertise<sensor_msgs::PointCloud2>("/obstacle_detection/point_cloud_filtered", 1);
     pubClusters = nh.advertise<sensor_msgs::PointCloud2>("/obstacle_detection/point_cloud_cluster", 1);
     pubCenteroids = nh.advertise<sensor_msgs::PointCloud2>("/obstacle_detection/point_cloud_cluster_centeroids", 1);
+    pubClassify = nh.advertise<std_msgs::UInt8MultiArray>("/obstacle_detection/point_cloud_cluster_class", 1);
 
     pnh.param<double>("box_height", boxHeight, 2);
     pnh.param<double>("box_width", boxWidth, 2);
@@ -173,6 +174,7 @@ void ObstacleDetection::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr
         {
             printf("%d ", classify.data[i]);
         }std::cout << "\n";
+        pubClassify.publish(classify);
 
         std::vector<Vec3b> colors(static_cast<size_t>(clustersNum));
         for(size_t i = 0; i < static_cast<size_t>(clustersNum); i++)
