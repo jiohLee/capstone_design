@@ -50,6 +50,7 @@ void DecisionMaker::timerCallback(const ros::TimerEvent &)
         {
             if(carPoint.x < 0.7 || std::abs(velocityRelative) <= 0.15)
             {
+                velocity += velocityRelative;
                 switchLane();
             }
         }
@@ -65,41 +66,68 @@ void DecisionMaker::timerCallback(const ros::TimerEvent &)
     {
         if(onLane == ON_LANE_LEFT)
         {
-            if(!isObstacleAhead(1.5, -1.5, ON_LANE_LEFT))
+            if(!isObstacleAhead(-1.0, 1.0, ON_LANE_RIGHT))
             {
                 if(lane == LANE_STRAIGHT)
                 {
                     switchLane();
                 }
             }
+            else
+            {
+                ROS_INFO("ON RIGHT OBSTACLE");
+            }
         }
     }
+
+    if(onLane == ON_LANE_LEFT)
+    {
+        ROS_INFO("ON_LANE_LEFT");
+        velocity = 0.8;
+    }
+    else
+    {
+        ROS_INFO("ON_LANE_RIGHT");
+    }
+    if(goLane == GO_LANE_LEFT)
+    {
+        ROS_INFO("GO_LANE_LEFT");
+    }
+    else
+    {
+        ROS_INFO("GO_LANE_RIGHT");
+    }
+
 
     // follow order
     if(goLane == GO_LANE_RIGHT)
     {
         if(onLane == ON_LANE_LEFT)
         {
-            steer = GO_LANE_RIGHT * 0.4;
+            steer = GO_LANE_RIGHT * 0.3;
+            velocity = 0.4;
+        }
+        else
+        {
+            velocity = 0.6;
         }
     }
     else if(goLane == GO_LANE_LEFT)
     {
         if(onLane == ON_LANE_RIGHT)
         {
-            steer = GO_LANE_LEFT * 0.4;
+            steer = GO_LANE_LEFT * 0.3;
+            velocity = 0.4;
         }
-    }
-
-    // slow down when curve appear
-    if(lane == LANE_CURVE)
-    {
-        velocity = 0.4;
+        else
+        {
+            velocity = 0.8;
+        }
     }
 
     // estop
 
-    if(isObstacleAhead(0, 0.5, onLane))
+    if(isObstacleAhead(0, 0.4, onLane))
     {
         velocity = 0;
     }
@@ -162,17 +190,15 @@ void DecisionMaker::onLaneCallback(const std_msgs::String::ConstPtr &msg)
 
 void DecisionMaker::switchLane()
 {
-    if(lane == LANE_STRAIGHT)
+    if(onLane == ON_LANE_LEFT)
     {
-        if(onLane == ON_LANE_LEFT)
-        {
-            goLane = GO_LANE_RIGHT;
-        }
-        else if(onLane == ON_LANE_RIGHT)
-        {
-            goLane = GO_LANE_LEFT;
-        }
+        goLane = GO_LANE_RIGHT;
     }
+    else if(onLane == ON_LANE_RIGHT)
+    {
+        goLane = GO_LANE_LEFT;
+    }
+    ROS_INFO("SWITHCING");
 }
 
 bool DecisionMaker::isCarDetected(geometry_msgs::Point &pt)
@@ -208,7 +234,6 @@ bool DecisionMaker::isObstacleAhead(double lowerRange, double upperRange, Decisi
             yRangeRight -= 0.4;
         }
     }
-
     for(size_t i = 0; i < obstacles.centeroids.size(); i++)
     {
         const geometry_msgs::Point& pt = obstacles.centeroids[i];
