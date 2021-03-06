@@ -85,11 +85,7 @@ private:
     ros::Time timePointStraightCheck;
 
     bool car;
-    bool validPrevPoint;
-    ros::Time updateDur;
-    double velocityRelative;
     geometry_msgs::Point carPoint;
-    geometry_msgs::Point carPointPrev;
 };
 
 #endif // DECISION_MAKER_H

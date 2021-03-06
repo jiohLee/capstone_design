@@ -16,7 +16,6 @@ DecisionMaker::DecisionMaker(ros::NodeHandle & nh, ros::NodeHandle & pnh)
     goLane = GO_LANE_RIGHT; // start on the right lane
 
     car = false;
-    validPrevPoint = false;
 
     targetSteer = 0;
     timePointLaneCheck = ros::Time::now();
@@ -46,16 +45,17 @@ void DecisionMaker::timerCallback(const ros::TimerEvent &)
 
     if(isObstacleAhead(0, 1.0, onLane))
     {
-        if(validPrevPoint)
+        if(car)
         {
-            if(carPoint.x < 0.7 || std::abs(velocityRelative) <= 0.15)
+            ROS_INFO("CAR AHEAD");
+            if(carPoint.x < 0.7)
             {
-                velocity += velocityRelative;
                 switchLane();
             }
         }
         else
         {
+            ROS_INFO("OBSACLE AHEAD");
             if(isObstacleAhead(0, 0.5, onLane))
             {
                 velocity = 0;
@@ -64,22 +64,14 @@ void DecisionMaker::timerCallback(const ros::TimerEvent &)
     }
     else
     {
+        ROS_INFO("OBSTACLE FREE");
         if(onLane == ON_LANE_LEFT)
         {
-            if(!isObstacleAhead(-1.0, 1.0, ON_LANE_RIGHT))
-            {
-                if(lane == LANE_STRAIGHT)
-                {
-                    switchLane();
-                }
-            }
-            else
-            {
-                ROS_INFO("ON RIGHT OBSTACLE");
-            }
+            switchLane();
         }
     }
 
+    // info
     if(onLane == ON_LANE_LEFT)
     {
         ROS_INFO("ON_LANE_LEFT");
@@ -87,6 +79,7 @@ void DecisionMaker::timerCallback(const ros::TimerEvent &)
     }
     else
     {
+        velocity = 0.6;
         ROS_INFO("ON_LANE_RIGHT");
     }
     if(goLane == GO_LANE_LEFT)
@@ -98,7 +91,6 @@ void DecisionMaker::timerCallback(const ros::TimerEvent &)
         ROS_INFO("GO_LANE_RIGHT");
     }
 
-
     // follow order
     if(goLane == GO_LANE_RIGHT)
     {
@@ -107,10 +99,6 @@ void DecisionMaker::timerCallback(const ros::TimerEvent &)
             steer = GO_LANE_RIGHT * 0.3;
             velocity = 0.4;
         }
-        else
-        {
-            velocity = 0.6;
-        }
     }
     else if(goLane == GO_LANE_LEFT)
     {
@@ -118,10 +106,6 @@ void DecisionMaker::timerCallback(const ros::TimerEvent &)
         {
             steer = GO_LANE_LEFT * 0.3;
             velocity = 0.4;
-        }
-        else
-        {
-            velocity = 0.8;
         }
     }
 
@@ -149,30 +133,12 @@ void DecisionMaker::targetSteerCallback(const std_msgs::Float64::ConstPtr &msg)
 void DecisionMaker::obstacleCallback(const obstacle_msgs::Obstacle::ConstPtr &msg)
 {
     obstacles = *msg;
-
     geometry_msgs::Point pt;
     if(isCarDetected(pt))
     {
-        if(!car)
-        {
-            car = true;
-            carPoint = pt;
-        }
-        else
-        {
-            validPrevPoint = true;
-            carPointPrev = carPoint;
-            carPoint = pt;
-            double dur = ros::Time::now().toSec() - updateDur.toSec();
-            velocityRelative = (carPoint.x - carPointPrev.x) / dur;
-        }
+        car = true;
+        carPoint = pt;
     }
-    else
-    {
-        car = false;
-        validPrevPoint = false;
-    }
-    updateDur = ros::Time::now();
 }
 
 void DecisionMaker::onLaneCallback(const std_msgs::String::ConstPtr &msg)
@@ -190,15 +156,26 @@ void DecisionMaker::onLaneCallback(const std_msgs::String::ConstPtr &msg)
 
 void DecisionMaker::switchLane()
 {
-    if(onLane == ON_LANE_LEFT)
+    if(lane == LANE_STRAIGHT)
     {
-        goLane = GO_LANE_RIGHT;
+        ROS_INFO("READY TO SWITCH");
+        if(!isObstacleAhead(-1.0, 1.0, static_cast<OnLaneType>(onLane * -1)))
+        {
+            ROS_INFO("SWITCHING");
+            if(onLane == ON_LANE_LEFT)
+            {
+                goLane = GO_LANE_RIGHT;
+            }
+            else if(onLane == ON_LANE_RIGHT)
+            {
+                goLane = GO_LANE_LEFT;
+            }
+        }
+        else
+        {
+            ROS_INFO("CANNOT SWITCH");
+        }
     }
-    else if(onLane == ON_LANE_RIGHT)
-    {
-        goLane = GO_LANE_LEFT;
-    }
-    ROS_INFO("SWITHCING");
 }
 
 bool DecisionMaker::isCarDetected(geometry_msgs::Point &pt)
@@ -218,6 +195,7 @@ bool DecisionMaker::isObstacleAhead(double lowerRange, double upperRange, Decisi
 {
     double yRangeLeft = -0.25;
     double yRangeRight = 0.25;
+
     if(olt == ON_LANE_LEFT)
     {
         if(onLane == ON_LANE_RIGHT)
@@ -234,6 +212,7 @@ bool DecisionMaker::isObstacleAhead(double lowerRange, double upperRange, Decisi
             yRangeRight -= 0.4;
         }
     }
+
     for(size_t i = 0; i < obstacles.centeroids.size(); i++)
     {
         const geometry_msgs::Point& pt = obstacles.centeroids[i];
