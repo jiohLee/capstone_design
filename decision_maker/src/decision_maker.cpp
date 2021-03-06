@@ -16,7 +16,7 @@ DecisionMaker::DecisionMaker(ros::NodeHandle & nh, ros::NodeHandle & pnh)
     goLane = GO_LANE_RIGHT; // start on the right lane
 
     car = false;
-    updated = false;
+    validPrevPoint = false;
 
     targetSteer = 0;
     timePointLaneCheck = ros::Time::now();
@@ -46,8 +46,7 @@ void DecisionMaker::timerCallback(const ros::TimerEvent &)
 
     if(isObstacleAhead(0, 1.0, onLane))
     {
-        geometry_msgs::Point pt;
-        if(isCarDetected(pt))
+        if(validPrevPoint)
         {
             if(carPoint.x < 0.7 || std::abs(velocityRelative) <= 0.15)
             {
@@ -111,7 +110,6 @@ void DecisionMaker::timerCallback(const ros::TimerEvent &)
         ctrl.setTargetSteer(steer);
     }
     ctrl.publishControlInput();
-    updated = false;
 }
 
 void DecisionMaker::targetSteerCallback(const std_msgs::Float64::ConstPtr &msg)
@@ -122,7 +120,6 @@ void DecisionMaker::targetSteerCallback(const std_msgs::Float64::ConstPtr &msg)
 
 void DecisionMaker::obstacleCallback(const obstacle_msgs::Obstacle::ConstPtr &msg)
 {
-    updated = true;
     obstacles = *msg;
 
     geometry_msgs::Point pt;
@@ -135,6 +132,7 @@ void DecisionMaker::obstacleCallback(const obstacle_msgs::Obstacle::ConstPtr &ms
         }
         else
         {
+            validPrevPoint = true;
             carPointPrev = carPoint;
             carPoint = pt;
             double dur = ros::Time::now().toSec() - updateDur.toSec();
@@ -144,6 +142,7 @@ void DecisionMaker::obstacleCallback(const obstacle_msgs::Obstacle::ConstPtr &ms
     else
     {
         car = false;
+        validPrevPoint = false;
     }
     updateDur = ros::Time::now();
 }
