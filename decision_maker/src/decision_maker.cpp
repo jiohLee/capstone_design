@@ -56,10 +56,6 @@ void DecisionMaker::timerCallback(const ros::TimerEvent &)
         else
         {
             ROS_INFO("OBSACLE AHEAD");
-            if(isObstacleAhead(0, 0.5, onLane))
-            {
-                velocity = 0;
-            }
         }
     }
     else
@@ -111,7 +107,7 @@ void DecisionMaker::timerCallback(const ros::TimerEvent &)
 
     // estop
 
-    if(isObstacleAhead(0, 0.4, onLane))
+    if(isObstacleAhead(0, 0.5, onLane))
     {
         velocity = 0;
     }
@@ -138,6 +134,10 @@ void DecisionMaker::obstacleCallback(const obstacle_msgs::Obstacle::ConstPtr &ms
     {
         car = true;
         carPoint = pt;
+    }
+    else
+    {
+        car = false;
     }
 }
 
