@@ -17,7 +17,7 @@
 
         <!-- show process -->
         <param name="show_source" type="bool" value="false"/>
-        <param name="show_sliding_window" type="bool" value="false"/>
+        <param name="show_sliding_window" type="bool" value="true"/>
 
         <!-- sliding window -->
         <param name="window_width" type="int" value="200"/>
