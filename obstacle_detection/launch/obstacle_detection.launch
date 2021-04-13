@@ -14,15 +14,10 @@
         <param name="val_max" type="int" value="255"/>
         <param name="val_min" type="int" value="0"/>
 
-        <param name="focal_length_x" type="double" value="618.66311"/>
-        <param name="focal_length_y" type="double" value="616.74570"/>
-        <param name="focal_center_x" type="double" value="443.39763"/>
-        <param name="focal_center_y" type="double" value="267.92429"/>
-
-        <!-- <param name="focal_length_x" type="double" value="778.6631160714704"/>
+        <param name="focal_length_x" type="double" value="678.66311"/>
         <param name="focal_length_y" type="double" value="776.7457027632787"/>
-        <param name="focal_center_x" type="double" value="443.3976311192036"/>
-        <param name="focal_center_y" type="double" value="267.9242901743495"/> -->
+        <param name="focal_center_x" type="double" value="432.39763"/>
+        <param name="focal_center_y" type="double" value="240.92429"/>
 
         <param name="dist_coef_k_1" type="double" value="0.08284508782990611"/>
         <param name="dist_coef_k_2" type="double" value="-0.4085483945141859"/>
