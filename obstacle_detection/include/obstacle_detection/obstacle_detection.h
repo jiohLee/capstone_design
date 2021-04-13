@@ -77,6 +77,12 @@ private:
     double c_x; // focal center x
     double c_y; // focal center y
 
+    double k_1; // camera distortion coefficient
+    double k_2;
+    double p_1;
+    double p_2;
+    double k_3;
+
     bool showSource;
     bool showBinary;
 
@@ -119,6 +125,7 @@ private:
 
     Mat RT; // rotation & translation matrix
     Mat CM; // camera intrinsic paramter matrix
+    Mat distortion;
 
     ros::Time timePointPrev;
     double timePointElapsed;

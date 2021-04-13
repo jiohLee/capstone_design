@@ -50,6 +50,12 @@ ObstacleDetection::ObstacleDetection(ros::NodeHandle &nh, ros::NodeHandle &pnh)
     pnh.param<double>("focal_center_x", c_x, 443.39763);
     pnh.param<double>("focal_center_y", c_y, 267.92429);
 
+    pnh.param<double>("dist_coef_k_1", k_1, 0.08284508782990611);
+    pnh.param<double>("dist_coef_k_2", k_2, 0.08284508782990611);
+    pnh.param<double>("dist_coef_p_1", p_1, 0.08284508782990611);
+    pnh.param<double>("dist_coef_p_1", p_2, 0.08284508782990611);
+    pnh.param<double>("dist_coef_k_3", k_3, 0.08284508782990611);
+
     timePointElapsed = 0;
     timePointPrev = ros::Time::now();
 
@@ -62,6 +68,8 @@ ObstacleDetection::ObstacleDetection(ros::NodeHandle &nh, ros::NodeHandle &pnh)
           f_x, 0.0, c_x,
           0.0, f_y, c_y,
           0.0, 0.0, 1.0);
+
+    distortion = (Mat_<double>(1, 5) << k_1, k_2, p_1, p_2, k_3);
 
     //    classify.layout.dim.clear();
     //    classify.data.clear();
@@ -251,7 +259,8 @@ void ObstacleDetection::imgCallback(const sensor_msgs::CompressedImage::ConstPtr
 {
     cv_bridge::CvImagePtr cvPtr;
     cvPtr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
-    src = cvPtr->image;
+    Mat distorted = cvPtr->image;
+    undistort(distorted, src, CM, distortion);
 }
 
 void ObstacleDetection::scan2pointCloud(const sensor_msgs::LaserScan& input, pcl::PointCloud<pcl::PointXYZI> & dst)
