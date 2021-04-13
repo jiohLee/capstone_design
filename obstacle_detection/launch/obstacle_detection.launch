@@ -14,12 +14,12 @@
         <param name="val_max" type="int" value="255"/>
         <param name="val_min" type="int" value="0"/>
 
-        <param name="camera_angle_left_right" type="double" value="56"/>
-        <param name="camera_angle_up_down" type="double" value="74"/>
-        <param name="x_distance_camera_to_lidar" type="double" value="0.15"/>
-        <param name="z_distance_camera_to_lidar" type="double" value="0.06"/>
+        <param name="focal_length_x" type="double" value="598.66311"/>
+        <param name="focal_length_y" type="double" value="596.74570"/>
+        <param name="focal_center_x" type="double" value="443.39763"/>
+        <param name="focal_center_y" type="double" value="267.92429"/>
 
         <param name="show_source" type="bool" value="true"/>
-	<param name="show_binary" type="bool" value="false"/>
+	    <param name="show_binary" type="bool" value="false"/>
     </node>
 </launch>

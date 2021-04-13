@@ -65,17 +65,17 @@ private:
     int maxClusterSize;
     double clusterTolerance;
 
-    int hueMax;
+    int hueMax; // hsv color range
     int hueMin;
     int satMax;
     int satMin;
     int valMax;
     int valMin;
 
-    double camAngleLR;     // deg
-    double camAngleUD;     // deg
-    double xDistCamLidar;  // m
-    double zDistCamLidar;  // m
+    double f_x; // focal length x
+    double f_y; // focal length y
+    double c_x; // focal center x
+    double c_y; // focal center y
 
     bool showSource;
     bool showBinary;
@@ -85,7 +85,7 @@ private:
     void setROI(const pcl::PointCloud<pcl::PointXYZI> & input, pcl::PointCloud<pcl::PointXYZI> & dst);
     int clustering(const pcl::PointCloud<pcl::PointXYZI>::Ptr input, std::vector<pcl::PointCloud<pcl::PointXYZI>>& clusters);
     void erodeAndDilate(Mat &input, int shape, Size kSize, int repeat);
-    void lidarPoint2ImagePoint(const pcl::PointXYZI& lPt, Point & iPt);
+    void imageProjection(const pcl::PointXYZI& lPt, Point & iPt);
 
     // Connected Component Index
     enum StatsIdx
@@ -103,12 +103,22 @@ private:
         CENTER_Y
     };
 
+    enum POINT_IDX
+    {
+        X = 0,
+        Y,
+        Z
+    };
+
     // Variables
     Mat src;
 
     int clustersNum;
     pcl::PointCloud<pcl::PointXYZI> pclClusters;
     pcl::PointCloud<pcl::PointXYZI> pclCenteroids;
+
+    Mat RT; // rotation & translation matrix
+    Mat CM; // camera intrinsic paramter matrix
 
     ros::Time timePointPrev;
     double timePointElapsed;

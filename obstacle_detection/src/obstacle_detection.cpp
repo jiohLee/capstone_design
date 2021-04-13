@@ -42,20 +42,29 @@ ObstacleDetection::ObstacleDetection(ros::NodeHandle &nh, ros::NodeHandle &pnh)
     pnh.param<int>("val_max", valMax, 255);
     pnh.param<int>("val_min", valMin, 40);
 
-
-    pnh.param<double>("camera_angle_left_right", camAngleLR, 70);
-    pnh.param<double>("camera_angle_up_down", camAngleUD, 75);
-    pnh.param<double>("x_distance_camera_to_lidar", xDistCamLidar, 0.15);
-    pnh.param<double>("z_distance_camera_to_lidar", zDistCamLidar, 0.06);
-
     pnh.param<bool>("show_source", showSource, false);
     pnh.param<bool>("show_binary", showBinary, false);
+
+    pnh.param<double>("focal_length_x", f_x, 778.66311);
+    pnh.param<double>("focal_length_y", f_y, 776.74570);
+    pnh.param<double>("focal_center_x", c_x, 443.39763);
+    pnh.param<double>("focal_center_y", c_y, 267.92429);
 
     timePointElapsed = 0;
     timePointPrev = ros::Time::now();
 
-//    classify.layout.dim.clear();
-//    classify.data.clear();
+    RT = (Mat_<double>(3,4) <<
+          0, -1, 0, 0,
+          0, 0, -1, -0.05,
+          1, 0, 0, -0.16);
+
+    CM = (Mat_<double>(3, 3) <<
+          f_x, 0.0, c_x,
+          0.0, f_y, c_y,
+          0.0, 0.0, 1.0);
+
+    //    classify.layout.dim.clear();
+    //    classify.data.clear();
 }
 
 void ObstacleDetection::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr &msg)
@@ -154,7 +163,7 @@ void ObstacleDetection::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr
             Point iPt;
             const pcl::PointXYZI& lPt = pclCenteroids[i];
             uint32_t cls = 0;
-            lidarPoint2ImagePoint(lPt, iPt);
+            imageProjection(lPt, iPt);
             for (size_t r = 0; r < rois.size(); r++)
             {
                 const Rect& roi = rois[r];
@@ -206,7 +215,7 @@ void ObstacleDetection::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr
             const pcl::PointXYZI& lPt = pclCenteroids[i];
             if(lPt.x > 0)
             {
-                lidarPoint2ImagePoint(lPt, iPt);
+                imageProjection(lPt, iPt);
                 circle(prj, iPt, 5, Scalar(0,0,255), -1);
                 if(classify[static_cast<size_t>(lPt.intensity)] == 0) // obstacle
                 {
@@ -225,7 +234,7 @@ void ObstacleDetection::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr
             pcl::PointXYZI & lPt = pclClusters[i];
             if(lPt.x < 0) continue;
 
-            lidarPoint2ImagePoint(lPt, iPt);
+            imageProjection(lPt, iPt);
             double dist = std::sqrt(std::pow(lPt.x,2) + std::pow(lPt.y,1));
             int radius = static_cast<int>(4 / dist);
             if(radius <= 0) radius = 1;
@@ -360,17 +369,18 @@ void ObstacleDetection::erodeAndDilate(Mat &input, int shape, Size kSize, int re
     }
 }
 
-void ObstacleDetection::lidarPoint2ImagePoint(const pcl::PointXYZI &lPt, Point &iPt)
+void ObstacleDetection::imageProjection(const pcl::PointXYZI &lPt, Point &iPt)
 {
-    int ctRow = src.rows / 2;
-    int ctCol = src.cols / 2;
+    Mat Xw = (Mat_<double>(4, 1) << lPt.x, lPt.y, lPt.z, 1.0);
+    Mat Xc = RT * Xw;
+    double s = Xc.ptr<double>(0)[Z];
+    Mat Xi = 1 / s * (CM * Xc);
 
-    double kY = ctRow / ((std::tan(deg2rad(90 - camAngleUD)) * (static_cast<double>(lPt.x) - xDistCamLidar)));
-    double kX = ctCol / ((std::tan(deg2rad(90 - camAngleLR)) * (static_cast<double>(lPt.x) - xDistCamLidar)));
-
-    iPt.y = static_cast<int>(ctRow - kY * zDistCamLidar);
-    iPt.x = static_cast<int>(ctCol - kX * static_cast<double>(lPt.y));
+    double* data = Xi.ptr<double>(0);
+    iPt.x = data[X];
+    iPt.y = data[Y];
 }
+
 
 
 
