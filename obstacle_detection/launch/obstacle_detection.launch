@@ -14,16 +14,16 @@
         <param name="val_max" type="int" value="255"/>
         <param name="val_min" type="int" value="0"/>
 
-        <param name="focal_length_x" type="double" value="678.66311"/>
-        <param name="focal_length_y" type="double" value="776.7457027632787"/>
-        <param name="focal_center_x" type="double" value="432.39763"/>
-        <param name="focal_center_y" type="double" value="240.92429"/>
+        <param name="focal_length_x" type="double" value="626.3079"/>
+        <param name="focal_length_y" type="double" value="625.9130"/>
+        <param name="focal_center_x" type="double" value="434.5163"/>
+        <param name="focal_center_y" type="double" value="255.0329"/>
 
-        <param name="dist_coef_k_1" type="double" value="0.08284508782990611"/>
-        <param name="dist_coef_k_2" type="double" value="-0.4085483945141859"/>
-        <param name="dist_coef_p_1" type="double" value="0.005636894542211674"/>
-        <param name="dist_coef_p_2" type="double" value="0.004440486764573178"/>
-        <param name="dist_coef_k_3" type="double" value="0.5205040724120439"/>
+        <param name="dist_coef_k_1" type="double" value="0.0172"/>
+        <param name="dist_coef_k_2" type="double" value="-0.0449"/>
+        <param name="dist_coef_p_1" type="double" value="0.0"/>
+        <param name="dist_coef_p_2" type="double" value="0.0"/>
+        <param name="dist_coef_k_3" type="double" value="0.0"/>
 
         <param name="show_source" type="bool" value="true"/>
 	    <param name="show_binary" type="bool" value="false"/>
