@@ -7,21 +7,20 @@
 
 constexpr int row__ = 480;
 constexpr int col__ = 864;
-constexpr int left_high = 230;
-constexpr int left_low = 100;
 
 LaneDetection::LaneDetection(ros::NodeHandle & nh, ros::NodeHandle & pnh)
     : nh(nh)
     , pnh(pnh)
-    , srcTri({Point2f(left_high, 0), Point2f(col__ - left_high, 0), Point2f(left_low, row__), Point2f(col__ - left_low, row__)}) // before perspective transform
-    , dstTri({Point2f(left_high, 0), Point2f(col__ - left_high, 0), Point2f(left_high, row__), Point2f(col__ - left_high, row__)})// after perspective transform
 {
     subCompImg = nh.subscribe("usb_cam_1/image_raw/compressed", 1, &LaneDetection::imgCallback, this);
     pubTargetSteer = nh.advertise<std_msgs::Float64>("/lane_detection/target_steer", 1);
     pubOnLane = nh.advertise<std_msgs::String>("/lane_detection/on_lane", 1);
 
-    // Save Last Image For Transformation
-    pnh.param<bool>("save_last_img", bSaveLastImage, false);
+    // Perspective Transform Params
+    pnh.param<int>("left_high", leftHigh, 303);
+    pnh.param<int>("left_low", leftLow, 151);
+    srcTri.assign({Point2f(leftHigh, 0), Point2f(col__ - leftHigh, 0), Point2f(leftLow, row__), Point2f(col__ - leftLow, row__)});
+    dstTri.assign({Point2f(leftHigh, 0), Point2f(col__ - leftHigh, 0), Point2f(leftHigh, row__), Point2f(col__ - leftHigh, row__)});
 
     // HSV Color Ranges
     pnh.param<int>("red_hue_1_max", redHMax1, 10);
@@ -48,16 +47,6 @@ LaneDetection::LaneDetection(ros::NodeHandle & nh, ros::NodeHandle & pnh)
 
     // Init Time Point
     timePointPrev = ros::Time::now();
-}
-
-void LaneDetection::saveLastImage()
-{
-    if (bSaveLastImage)
-    {
-        imwrite("/home/a/line.jpg", src);
-        imwrite("/home/a/topView.jpg", topView);
-        std::cout << "\n\nIMAGE SAVED!!\n\n";
-    }
 }
 
 void LaneDetection::imgCallback(const sensor_msgs::CompressedImage::ConstPtr & msg)
