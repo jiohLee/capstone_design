@@ -1,14 +1,17 @@
 <launch>
     <node pkg="decision_maker" type="decision_maker_node" name="decision_maker_node" output="screen">
-	<param name="target_velocity" type="double" value="0.4"/>
+	    <param name="target_velocity" type="double" value="0.8"/>
 
         <!-- controller param -->
         <param name="accel" type="double" value="0.2"/>
-        <param name="steer_offset" type="double" value="0.05"/>
-        <param name="p_gain" type="double" value="0.6"/>
+        <param name="steer_offset" type="double" value="0.03"/>
+        <param name="p_gain" type="double" value="0.5"/>
         <param name="i_gain" type="double" value="0.0005"/>
-        <param name="d_gain" type="double" value="2.0"/>
+        <param name="d_gain" type="double" value="0.5"/>
         <param name="menual_start" type="bool" value="true"/>
+
+        <param name="curve_threshold_steer" type="double" value="0.1"/>
+        <param name="curve_threshold_time" type="double" value="0.3"/>
     </node>
     <node pkg="joy" type="joy_node" name="joy_node"/>
 </launch>

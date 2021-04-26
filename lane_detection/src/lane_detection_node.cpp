@@ -12,6 +12,5 @@ int main(int argc, char** argv)
     ros::NodeHandle pnh("~");
     LaneDetection ld(nh, pnh);
     ros::spin();
-    ld.saveLastImage();
     return 0;
 }

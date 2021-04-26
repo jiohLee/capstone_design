@@ -16,7 +16,6 @@ class LaneDetection
 public:
 
     LaneDetection(ros::NodeHandle & nh, ros::NodeHandle & pnh);
-    void saveLastImage();
 
 private:
 
@@ -36,7 +35,9 @@ private:
     std_msgs::String onLane;
 
     // ROS Param
-    bool bSaveLastImage;
+    int leftHigh;
+    int leftLow;
+
     int redHMax1;
     int redHMin1;
     int redHMax2;

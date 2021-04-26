@@ -1,7 +1,8 @@
 <launch>
     <node pkg="lane_detection" type="lane_detection_node" name="lane_detection_node">
-        <!-- can save last img -->
-        <param name="save_last_img" type="bool" value="false"/>
+		<!-- perspective transform param-->
+		<param name="left_high" type="int" value="303"/>
+		<param name="left_low" type="int" value="151"/>
 
         <!-- get color by HSV -->
         <param name="red_hue_1_max" type="int" value="10"/>     <!-- red low -->
@@ -22,6 +23,6 @@
         <!-- sliding window -->
         <param name="window_width" type="int" value="200"/>
         <param name="window_num" type="int" value="6"/>
-        <param name="target_window_height" type="int" value="4"/>
+        <param name="target_window_height" type="int" value="2"/>
     </node>
 </launch>

@@ -159,22 +159,6 @@ include_directories(
 #   ${catkin_LIBRARIES}
 # )
 
-add_executable(tmp_node
-    src/tmp.cpp
-    )
-target_link_libraries(tmp_node
-  ${catkin_LIBRARIES}
-  ${OpenCV_LIBRARIES}
-)
-
-add_executable(lane_test_node
-    src/lane_test_node.cpp
-    )
-target_link_libraries(lane_test_node
-  ${catkin_LIBRARIES}
-  ${OpenCV_LIBRARIES}
-)
-
  add_executable(${PROJECT_NAME}_node
      src/lane_detection_node.cpp
      src/lane_detection.cpp
