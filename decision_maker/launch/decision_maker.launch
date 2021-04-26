@@ -10,7 +10,7 @@
         <param name="d_gain" type="double" value="0.5"/>
         <param name="menual_start" type="bool" value="true"/>
 
-        <param name="curve_threshold_steer" type="double" value="0.1"/>
+        <param name="curve_threshold_steer" type="double" value="0.2"/>
         <param name="curve_threshold_time" type="double" value="0.3"/>
     </node>
     <node pkg="joy" type="joy_node" name="joy_node"/>
