@@ -52,7 +52,10 @@ HSVBinarization::HSVBinarization(ros::NodeHandle& nh, ros::NodeHandle& pnh)
     , r({0,0,0,0,0,0})
     , winName("hsv binarization")
 {
-    subCompImg = nh.subscribe("usb_cam_hsv_binarization/image_raw/compressed", 1, &HSVBinarization::imageCallback, this);
+    std::string source_name;
+    pnh.param<std::string>("source_name", source_name, "usb_cam_1/image_raw/compressed");
+
+    subCompImg = nh.subscribe(source_name, 1, &HSVBinarization::imageCallback, this);
 
     namedWindow(winName, WINDOW_AUTOSIZE);
 

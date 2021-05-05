@@ -68,7 +68,11 @@ PerspectiveTransform::PerspectiveTransform(ros::NodeHandle &nh, ros::NodeHandle 
     , pnh(pnh)
     , winName("Perspective Transform")
 {
-    subCompImg = nh.subscribe("usb_cam_perspective_transform/image_raw/compressed", 1, &PerspectiveTransform::imageCallback, this);
+    std::string source_name;
+
+    pnh.param<std::string>("source_name", source_name, "usb_cam_1/image_raw/compressed");
+
+    subCompImg = nh.subscribe(source_name, 1, &PerspectiveTransform::imageCallback, this);
 
     points.reserve(8);
     src.reserve(4);

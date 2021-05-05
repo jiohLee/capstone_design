@@ -10,7 +10,7 @@
         <param name="red_hue_2_max" type="int" value="179"/>    <!-- red high -->
         <param name="red_hue_2_min" type="int" value="159"/>    <!-- red high -->
         <param name="yellow_hue_max" type="int" value="50"/>    <!-- yellow -->
-        <param name="yellow_hue_min" type="int" value="20"/>    <!-- yellow -->
+        <param name="yellow_hue_min" type="int" value="25"/>    <!-- yellow -->
         <param name="sat_max" type="int" value="255"/>
         <param name="sat_min" type="int" value="40"/>
         <param name="val_max" type="int" value="255"/>
