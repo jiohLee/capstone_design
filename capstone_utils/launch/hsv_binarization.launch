@@ -1,14 +1,5 @@
 <launch>
-    <!-- lane detection camera -->
-    <node name="usb_cam_hsv_binarization" pkg="usb_cam" type="usb_cam_node" output="screen" >
-        <param name="video_device" value="/dev/video1" />
-        <param name="image_width" value="864" />
-        <param name="image_height" value="480" />
-        <param name="pixel_format" value="yuyv" />
-        <param name="camera_frame_id" value="usb_cam" />
-        <param name="io_method" value="mmap"/>
-    </node>
-	
 	<node name="hsv_binarization_node" pkg="capstone_utils" type="hsv_binarization_node" output="screen">
+	<param name="source_name" type="string" value="usb_cam_1/image_raw/compressed"/>
 	</node>
 </launch>
