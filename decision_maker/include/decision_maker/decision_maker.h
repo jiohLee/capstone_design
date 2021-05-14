@@ -7,6 +7,7 @@
 #include <sensor_msgs/LaserScan.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/String.h>
+#include <geometry_msgs/Point.h>
 //#include <std_msgs/UInt8MultiArray.h>
 //#include <sensor_msgs/PointCloud2.h>
 
@@ -30,7 +31,7 @@ private:
 
     // ROS Callbacks
     void timerCallback(const ros::TimerEvent& event);
-    void targetSteerCallback(const std_msgs::Float64::ConstPtr& msg);
+    void laneCenterCallback(const geometry_msgs::Point::ConstPtr& msg);
     void obstacleCallback(const obstacle_msgs::Obstacle::ConstPtr& msg);
     void onLaneCallback(const std_msgs::String::ConstPtr& msg);
 
