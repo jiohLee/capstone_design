@@ -24,7 +24,7 @@ private:
 
     // ROS Callbacks
     void timerCallback(const ros::TimerEvent& event);
-    void targetSteerCallback(const geometry_msgs::Point:ConstPtr& msg);
+    void targetSteerCallback(const geometry_msgs::Point::ConstPtr& msg);
     void obstacleCallback(const sensor_msgs::PointCloud2::ConstPtr& msg);
     void onLaneCallback(const std_msgs::String::ConstPtr& msg);
 
