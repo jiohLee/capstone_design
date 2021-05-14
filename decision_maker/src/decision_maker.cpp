@@ -4,7 +4,7 @@
 DecisionMaker::DecisionMaker(ros::NodeHandle & nh, ros::NodeHandle & pnh)
     :ctrl(nh, pnh)
 {
-    subTargetSteer = nh.subscribe("/lane_detection/target_steer", 1, &DecisionMaker::targetSteerCallback, this);
+    subTargetSteer = nh.subscribe("/lane_detection/lane_center_point", 1, &DecisionMaker::targetSteerCallback, this);
     subOnLane = nh.subscribe("/lane_detection/on_lane", 1, &DecisionMaker::onLaneCallback, this);
     subObstacle = nh.subscribe("/obstacle_detection/point_cloud_cluster_centeroids", 1, &DecisionMaker::obstacleCallback, this);
 
@@ -18,7 +18,6 @@ DecisionMaker::DecisionMaker(ros::NodeHandle & nh, ros::NodeHandle & pnh)
 
 void DecisionMaker::timerCallback(const ros::TimerEvent &)
 {
-    geometry_msgs::Twist target;
     velocity = targetVel;
     steer = targetSteer;
 
@@ -53,10 +52,10 @@ void DecisionMaker::timerCallback(const ros::TimerEvent &)
     ctrl.publishControlInput();
 }
 
-void DecisionMaker::targetSteerCallback(const std_msgs::Float64::ConstPtr &msg)
+void DecisionMaker::targetSteerCallback(const geometry_msgs::Point::ConstPtr &msg)
 {
-    const std_msgs::Float64& steer = *msg;
-    targetSteer = steer.data;
+    const geometry_msgs::Point& pt = *msg;
+    targetSteer = std::atan2(pt.y, pt.x);
 }
 
 void DecisionMaker::obstacleCallback(const sensor_msgs::PointCloud2::ConstPtr &msg)

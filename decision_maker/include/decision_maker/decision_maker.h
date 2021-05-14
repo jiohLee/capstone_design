@@ -2,10 +2,9 @@
 #define DECISION_MAKER_H
 
 #include <ros/ros.h>
-#include <sensor_msgs/LaserScan.h>
-#include <std_msgs/Float64.h>
 #include <std_msgs/String.h>
 #include <sensor_msgs/PointCloud2.h>
+#include <geometry_msgs/Point.h>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -25,7 +24,7 @@ private:
 
     // ROS Callbacks
     void timerCallback(const ros::TimerEvent& event);
-    void targetSteerCallback(const std_msgs::Float64::ConstPtr& msg);
+    void targetSteerCallback(const geometry_msgs::Point:ConstPtr& msg);
     void obstacleCallback(const sensor_msgs::PointCloud2::ConstPtr& msg);
     void onLaneCallback(const std_msgs::String::ConstPtr& msg);
 
