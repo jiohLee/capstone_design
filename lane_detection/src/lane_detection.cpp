@@ -5,15 +5,12 @@
 
 #include "lane_detection/lane_detection.h"
 
-constexpr int row__ = 480;
-constexpr int col__ = 864;
-
 LaneDetection::LaneDetection(ros::NodeHandle & nh, ros::NodeHandle & pnh)
     : nh(nh)
     , pnh(pnh)
 {
     subCompImg = nh.subscribe("usb_cam_1/image_raw/compressed", 1, &LaneDetection::imgCallback, this);
-    pubTargetSteer = nh.advertise<std_msgs::Float64>("/lane_detection/target_steer", 1);
+    pubLaneCenterPoint = nh.advertise<geometry_msgs::Point>("/lane_detection/lane_center_point", 1);
     pubOnLane = nh.advertise<std_msgs::String>("/lane_detection/on_lane", 1);
 
     // Perspective Transform Params
@@ -87,8 +84,6 @@ void LaneDetection::imgCallback(const sensor_msgs::CompressedImage::ConstPtr & m
     */
 
     // get centeroids of both lane;
-//    std::vector<Point> centeroidsYellow;
-//    std::vector<Point> centeroidsRed;
     getSlidingWindow(topViewBinYellow, centeroidsYellow, windowWidth, windowNum);
     getSlidingWindow(topViewBinRed, centeroidsRed, windowWidth, windowNum);
 
@@ -97,8 +92,14 @@ void LaneDetection::imgCallback(const sensor_msgs::CompressedImage::ConstPtr & m
     targetWayPoint.x = std::abs((centeroidsRed[static_cast<size_t>(targetWindowHeight)].x + centeroidsYellow[static_cast<size_t>(targetWindowHeight)].x)/ 2);
     targetWayPoint.y = std::abs(centeroidsRed[static_cast<size_t>(targetWindowHeight)].y);
 
-    targetSteer.data = std::atan2((topView.cols / 2) - targetWayPoint.x, topView.rows - targetWayPoint.y);
-    pubTargetSteer.publish(targetSteer);
+    laneCenterPoint.x = (topView.rows - targetWayPoint.y) / px_per_m;
+    laneCenterPoint.y = ((topView.cols / 2) - targetWayPoint.x) / px_per_m;
+
+    float alpha = std::atan2(-laneCenterPoint.y, laneCenterPoint.x);
+    float lineTangent = alpha;
+    float a = std::cos(lineTangent);
+    float b = std::sin(lineTangent);
+    pubLaneCenterPoint.publish(laneCenterPoint);
 
     if (centeroidsRed[static_cast<size_t>(targetWindowHeight)].x - centeroidsYellow[static_cast<size_t>(targetWindowHeight)].x > 0)
     {
@@ -118,12 +119,13 @@ void LaneDetection::imgCallback(const sensor_msgs::CompressedImage::ConstPtr & m
     drawSlidingWindow(slidingWindowImg, centeroidsRed, windowWidth);
     drawSlidingWindow(slidingWindowImg, centeroidsYellow, windowWidth);
 
-    line(slidingWindowImg, Point(slidingWindowImg.cols / 2 - 200, targetWayPoint.y), Point(slidingWindowImg.cols / 2 + 200, targetWayPoint.y), Scalar(0, 255, 255), 1);
+    // draw reference line
+    line(slidingWindowImg, Point(slidingWindowImg.cols / 2 - 0.3 * px_per_m, targetWayPoint.y), Point(slidingWindowImg.cols / 2 + 0.3 * px_per_m, targetWayPoint.y), Scalar(0, 255, 255), 1);
     line(slidingWindowImg, Point(slidingWindowImg.cols / 2, targetWayPoint.y - 20), Point(slidingWindowImg.cols / 2, targetWayPoint.y + 20), Scalar(0, 255, 255), 1);
-    line(slidingWindowImg, Point(slidingWindowImg.cols / 2 - 150, targetWayPoint.y - 20), Point(slidingWindowImg.cols / 2 - 150, targetWayPoint.y + 20), Scalar(0, 255, 255), 1);
-    line(slidingWindowImg, Point(slidingWindowImg.cols / 2 + 150, targetWayPoint.y - 20), Point(slidingWindowImg.cols / 2 + 150, targetWayPoint.y + 20), Scalar(0, 255, 255), 1);
-    line(slidingWindowImg, Point(slidingWindowImg.cols / 2 - 200, targetWayPoint.y - 20), Point(slidingWindowImg.cols / 2 - 200, targetWayPoint.y + 20), Scalar(0, 255, 255), 1);
-    line(slidingWindowImg, Point(slidingWindowImg.cols / 2 + 200, targetWayPoint.y - 20), Point(slidingWindowImg.cols / 2 + 200, targetWayPoint.y + 20), Scalar(0, 255, 255), 1);
+    line(slidingWindowImg, Point(slidingWindowImg.cols / 2 - 0.25 * px_per_m, targetWayPoint.y - 20), Point(slidingWindowImg.cols / 2 - 0.25 * px_per_m, targetWayPoint.y + 20), Scalar(0, 255, 255), 1);
+    line(slidingWindowImg, Point(slidingWindowImg.cols / 2 + 0.25 * px_per_m, targetWayPoint.y - 20), Point(slidingWindowImg.cols / 2 + 0.25 * px_per_m, targetWayPoint.y + 20), Scalar(0, 255, 255), 1);
+    line(slidingWindowImg, Point(slidingWindowImg.cols / 2 - 0.3 * px_per_m, targetWayPoint.y - 20), Point(slidingWindowImg.cols / 2 - 0.3 * px_per_m, targetWayPoint.y + 20), Scalar(0, 255, 255), 1);
+    line(slidingWindowImg, Point(slidingWindowImg.cols / 2 + 0.3 * px_per_m, targetWayPoint.y - 20), Point(slidingWindowImg.cols / 2 + 0.3 * px_per_m, targetWayPoint.y + 20), Scalar(0, 255, 255), 1);
     circle(slidingWindowImg, targetWayPoint, 2, Scalar(0,0,255), -1);
 
     if(showSource) imshow("Source", src);
@@ -133,7 +135,7 @@ void LaneDetection::imgCallback(const sensor_msgs::CompressedImage::ConstPtr & m
     timePointPrev = ros::Time::now();
 
     ROS_INFO("LANE : %s", onLane.data.c_str());
-    ROS_INFO("TARGET STEER : %lf", targetSteer.data);
+    ROS_INFO("TARGET STEER : %lf", alpha);
     ROS_INFO("TIME ELAPSED : %lf [ms]\n", timePointElapsed * 1000.0);
 
     waitKey(1);
@@ -175,8 +177,6 @@ void LaneDetection::getSlidingWindow(Mat &input, std::vector<Point> &centeroids,
         }
     }
 
-//    centeroids.clear();
-//    centeroids.reserve(static_cast<size_t>(tmpCenteroids.rows - 1));
     int windowHeight = input.rows / windowNum;
     Point lt(startX, windowHeight * (windowNum - 1));
     Size windowSize(windowWidth, windowHeight);

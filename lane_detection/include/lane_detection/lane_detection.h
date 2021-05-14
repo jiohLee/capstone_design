@@ -6,7 +6,7 @@
 
 #include <ros/ros.h>
 #include <sensor_msgs/CompressedImage.h>
-#include <std_msgs/Float64.h>
+#include <geometry_msgs/Point.h>
 #include <std_msgs/String.h>
 
 using namespace cv;
@@ -27,11 +27,11 @@ private:
     ros::NodeHandle & pnh;
 
     ros::Subscriber subCompImg;
-    ros::Publisher pubTargetSteer;
+    ros::Publisher pubLaneCenterPoint;
     ros::Publisher pubOnLane;
 
     // ROS messages
-    std_msgs::Float64 targetSteer;
+    geometry_msgs::Point laneCenterPoint;
     std_msgs::String onLane;
 
     // ROS Param
@@ -92,6 +92,11 @@ private:
 
     ros::Time timePointPrev;
     double timePointElapsed;
+
+    // constant
+    const int row__ = 480;
+    const int col__ = 864;
+    const float px_per_m = 480;
 };
 
 #endif // LANE_DETECTION_H
