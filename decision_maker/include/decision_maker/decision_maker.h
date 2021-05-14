@@ -8,13 +8,6 @@
 #include <std_msgs/Float64.h>
 #include <std_msgs/String.h>
 #include <geometry_msgs/Point.h>
-//#include <std_msgs/UInt8MultiArray.h>
-//#include <sensor_msgs/PointCloud2.h>
-
-//#include <pcl/point_cloud.h>
-//#include <pcl/point_types.h>
-//#include <pcl_conversions/pcl_conversions.h>
-//#include <pcl/conversions.h>
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -79,7 +72,6 @@ private:
     double steer;
 
     OnLaneType onLane;
-    OnLaneType currentLane;
     GoLaneType goLane;
     LaneType lane;
     ros::Time timePointLaneCheck;
@@ -87,6 +79,9 @@ private:
 
     bool car;
     geometry_msgs::Point carPoint;
+
+    // experiment
+    std::vector<geometry_msgs::Point> lookAheadPoints;
 };
 
 #endif // DECISION_MAKER_H

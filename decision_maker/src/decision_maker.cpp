@@ -19,6 +19,7 @@ DecisionMaker::DecisionMaker(ros::NodeHandle & nh, ros::NodeHandle & pnh)
 
     targetSteer = 0;
     timePointLaneCheck = ros::Time::now();
+
 }
 
 void DecisionMaker::timerCallback(const ros::TimerEvent &)
@@ -75,9 +76,10 @@ void DecisionMaker::timerCallback(const ros::TimerEvent &)
     }
     else
     {
-        velocity = 0.6;
         ROS_INFO("ON_LANE_RIGHT");
+        velocity = 0.6;
     }
+
     if(goLane == GO_LANE_LEFT)
     {
         ROS_INFO("GO_LANE_LEFT");
@@ -87,26 +89,24 @@ void DecisionMaker::timerCallback(const ros::TimerEvent &)
         ROS_INFO("GO_LANE_RIGHT");
     }
 
-    // follow order
-    if(goLane == GO_LANE_RIGHT)
+    // select look ahead point
+    size_t selectLookAheadPoint = 1;
+    geometry_msgs::Point lookAheadPoint;
+    if(lookAheadPoints.size() == 3)
     {
-        if(onLane == ON_LANE_LEFT)
-        {
-            steer = GO_LANE_RIGHT * 0.3;
-            velocity = 0.4;
-        }
+        selectLookAheadPoint += static_cast<int>(onLane) == static_cast<int>(goLane) ? 0 : -1 * static_cast<int>(goLane);
+        lookAheadPoint = lookAheadPoints[selectLookAheadPoint];
     }
-    else if(goLane == GO_LANE_LEFT)
+    else
     {
-        if(onLane == ON_LANE_RIGHT)
-        {
-            steer = GO_LANE_LEFT * 0.3;
-            velocity = 0.4;
-        }
+        lookAheadPoint.x = 1;
     }
+    ROS_INFO("LOOKAHEADPOINT : %ld", selectLookAheadPoint);
+
+    steer = std::atan2(lookAheadPoint.y, lookAheadPoint.x);
+    if(selectLookAheadPoint != 1) velocity = 0.4;
 
     // estop
-
     if(isObstacleAhead(0, 0.5, onLane))
     {
         velocity = 0;
@@ -123,7 +123,24 @@ void DecisionMaker::timerCallback(const ros::TimerEvent &)
 void DecisionMaker::laneCenterCallback(const geometry_msgs::Point::ConstPtr &msg)
 {
     const geometry_msgs::Point& pt = *msg;
-    targetSteer = std::atan2(pt.y, pt.x);
+
+    float alpha = std::atan2(pt.y, pt.x);
+    float beta = M_PI / 2 - alpha;
+    geometry_msgs::Point left, right;
+
+    float a = std::cos(beta);
+    float b = std::sin(beta);
+
+    left.x = pt.x + 0.45 * a;
+    left.y = pt.y + 0.45 * b;
+
+    right.x = pt.x - 0.45 * a;
+    right.y = pt.y - 0.45 * b;
+
+    lookAheadPoints.clear();
+    lookAheadPoints.push_back(left);
+    lookAheadPoints.push_back(pt);
+    lookAheadPoints.push_back(right);
 }
 
 void DecisionMaker::obstacleCallback(const obstacle_msgs::Obstacle::ConstPtr &msg)
