@@ -5,16 +5,18 @@
 		<param name="left_low" type="int" value="151"/>
 
         <!-- get color by HSV -->
-        <param name="red_hue_1_max" type="int" value="10"/>     <!-- red low -->
-        <param name="red_hue_1_min" type="int" value="0"/>      <!-- red low -->
-        <param name="red_hue_2_max" type="int" value="179"/>    <!-- red high -->
-        <param name="red_hue_2_min" type="int" value="159"/>    <!-- red high -->
+        <param name="white_hue_max" type="int" value="180"/>     
+        <param name="white_hue_min" type="int" value="0"/>      
+        <param name="whtie_sat_max" type="int" value="40"/>
+        <param name="white_sat_min" type="int" value="0"/>
+        <param name="whtie_val_max" type="int" value="255"/>
+        <param name="whtie_val_min" type="int" value="210"/>
         <param name="yellow_hue_max" type="int" value="50"/>    <!-- yellow -->
-        <param name="yellow_hue_min" type="int" value="25"/>    <!-- yellow -->
-        <param name="sat_max" type="int" value="255"/>
-        <param name="sat_min" type="int" value="40"/>
-        <param name="val_max" type="int" value="255"/>
-        <param name="val_min" type="int" value="120"/>
+        <param name="yellow_hue_min" type="int" value="25"/>    
+        <param name="yellow_sat_max" type="int" value="255"/>
+        <param name="yellow_sat_min" type="int" value="40"/>
+        <param name="yellow_val_max" type="int" value="255"/>
+        <param name="yellow_val_min" type="int" value="120"/>
 
         <!-- show process -->
         <param name="show_source" type="bool" value="false"/>

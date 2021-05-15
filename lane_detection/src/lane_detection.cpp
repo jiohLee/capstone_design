@@ -20,16 +20,19 @@ LaneDetection::LaneDetection(ros::NodeHandle & nh, ros::NodeHandle & pnh)
     dstTri.assign({Point2f(leftHigh, 0), Point2f(col__ - leftHigh, 0), Point2f(leftHigh, row__), Point2f(col__ - leftHigh, row__)});
 
     // HSV Color Ranges
-    pnh.param<int>("red_hue_1_max", redHMax1, 10);
-    pnh.param<int>("red_hue_1_min", redHMin1, 0);
-    pnh.param<int>("red_hue_2_max", redHMax2, 179);
-    pnh.param<int>("red_hue_2_min", redHMin2, 159);
-    pnh.param<int>("yellow_hue_max", yellowHMax, 50);
-    pnh.param<int>("yellow_hue_min", yellowHMin, 20);
-    pnh.param<int>("sat_max", satMax, 255);
-    pnh.param<int>("sat_min", satMin, 40);
-    pnh.param<int>("val_max", valMax, 255);
-    pnh.param<int>("val_min", valMin, 120);
+    pnh.param<int>("whtie_hue_max", whiteHueMax, 180);
+    pnh.param<int>("whtie_hue_min", whiteHueMin, 0);
+    pnh.param<int>("whtie_sat_max", whiteSatMax, 40);
+    pnh.param<int>("whtie_sat_min", whiteSatMin, 0);
+    pnh.param<int>("whtie_val_max", whiteValMax, 255);
+    pnh.param<int>("whtie_val_min", whiteValMin, 210);
+
+    pnh.param<int>("yellow_hue_max", yellowHueMax, 50);
+    pnh.param<int>("yellow_hue_min", yellowHueMin, 20);
+    pnh.param<int>("yellow_sat_max", yellowSatMax, 255);
+    pnh.param<int>("yellow_sat_min", yellowSatMin, 40);
+    pnh.param<int>("yellow_val_max", yellowValMax, 255);
+    pnh.param<int>("yellow_val_min", yellowValMin, 120);
 
     // Sliding Window Params
     pnh.param<int>("window_width", windowWidth, 3);
@@ -39,7 +42,7 @@ LaneDetection::LaneDetection(ros::NodeHandle & nh, ros::NodeHandle & pnh)
     pnh.param<bool>("show_source", showSource, true);
     pnh.param<bool>("show_sliding_window", showSlidingWindow, true);
 
-    centeroidsRed.resize(static_cast<size_t>(windowNum));
+    centeroidsWhite.resize(static_cast<size_t>(windowNum));
     centeroidsYellow.resize(static_cast<size_t>(windowNum));
 
     // Init Time Point
@@ -66,17 +69,18 @@ void LaneDetection::imgCallback(const sensor_msgs::CompressedImage::ConstPtr & m
     cvtColor(topView, hsv, COLOR_BGR2HSV);
 
     // red lane binary
-    Mat dstRed1 = Mat::zeros(src.size(), src.type());
-    Mat dstRed2 = Mat::zeros(src.size(), src.type());
-    inRange(hsv, Scalar(redHMin1, satMin, valMin), Scalar(redHMax1, satMax, valMax),dstRed1);
-    inRange(hsv, Scalar(redHMin2, satMin, valMin), Scalar(redHMax2, satMax, valMax),dstRed2);
-    topViewBinRed = dstRed1 + dstRed2;
+//    Mat dstRed1 = Mat::zeros(src.size(), src.type());
+//    Mat dstRed2 = Mat::zeros(src.size(), src.type());
+//    inRange(hsv, Scalar(redHMin1, satMin, valMin), Scalar(redHMax1, satMax, valMax),dstRed1);
+//    inRange(hsv, Scalar(redHMin2, satMin, valMin), Scalar(redHMax2, satMax, valMax),dstRed2);
+//    topViewBinRed = dstRed1 + dstRed2;
+    inRange(hsv, Scalar(whiteHueMin, whiteSatMin, whiteValMin), Scalar(whiteHueMax, whiteSatMax, whiteValMax),topViewBinWhite);
 
     // yellow lane binary
-    inRange(hsv, Scalar(yellowHMin, satMin, valMin), Scalar(yellowHMax, satMax, valMax),topViewBinYellow);
+    inRange(hsv, Scalar(yellowHueMin, yellowSatMin, yellowValMin), Scalar(yellowHueMax, yellowSatMax, yellowValMax),topViewBinYellow);
 
     // remove salt noise
-    erodeAndDilate(topViewBinRed, MorphShapes::MORPH_RECT, Size(3,3), 3);
+    erodeAndDilate(topViewBinWhite, MorphShapes::MORPH_RECT, Size(3,3), 3);
     erodeAndDilate(topViewBinYellow, MorphShapes::MORPH_RECT, Size(3,3), 3);
 
     /*
@@ -85,12 +89,12 @@ void LaneDetection::imgCallback(const sensor_msgs::CompressedImage::ConstPtr & m
 
     // get centeroids of both lane;
     getSlidingWindow(topViewBinYellow, centeroidsYellow, windowWidth, windowNum);
-    getSlidingWindow(topViewBinRed, centeroidsRed, windowWidth, windowNum);
+    getSlidingWindow(topViewBinWhite, centeroidsWhite, windowWidth, windowNum);
 
     // publish target steer and on lane
     Point targetWayPoint;
-    targetWayPoint.x = std::abs((centeroidsRed[static_cast<size_t>(targetWindowHeight)].x + centeroidsYellow[static_cast<size_t>(targetWindowHeight)].x)/ 2);
-    targetWayPoint.y = std::abs(centeroidsRed[static_cast<size_t>(targetWindowHeight)].y);
+    targetWayPoint.x = std::abs((centeroidsWhite[static_cast<size_t>(targetWindowHeight)].x + centeroidsYellow[static_cast<size_t>(targetWindowHeight)].x)/ 2);
+    targetWayPoint.y = std::abs(centeroidsWhite[static_cast<size_t>(targetWindowHeight)].y);
 
     laneCenterPoint.x = (topView.rows - targetWayPoint.y) / px_per_m;
     laneCenterPoint.y = ((topView.cols / 2) - targetWayPoint.x) / px_per_m;
@@ -101,7 +105,7 @@ void LaneDetection::imgCallback(const sensor_msgs::CompressedImage::ConstPtr & m
     float b = std::sin(lineTangent);
     pubLaneCenterPoint.publish(laneCenterPoint);
 
-    if (centeroidsRed[static_cast<size_t>(targetWindowHeight)].x - centeroidsYellow[static_cast<size_t>(targetWindowHeight)].x > 0)
+    if (centeroidsWhite[static_cast<size_t>(targetWindowHeight)].x - centeroidsYellow[static_cast<size_t>(targetWindowHeight)].x > 0)
     {
         onLane.data = "ON_LANE_RIGHT";
     }
@@ -114,9 +118,9 @@ void LaneDetection::imgCallback(const sensor_msgs::CompressedImage::ConstPtr & m
     // draw sliding window
     Mat topViewMerged;
     Mat slidingWindowImg;
-    bitwise_or(topViewBinRed, topViewBinYellow, topViewMerged);
+    bitwise_or(topViewBinWhite, topViewBinYellow, topViewMerged);
     cvtColor(topViewMerged, slidingWindowImg, COLOR_GRAY2BGR);
-    drawSlidingWindow(slidingWindowImg, centeroidsRed, windowWidth);
+    drawSlidingWindow(slidingWindowImg, centeroidsWhite, windowWidth);
     drawSlidingWindow(slidingWindowImg, centeroidsYellow, windowWidth);
 
     // draw reference line
