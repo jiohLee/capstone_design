@@ -2,7 +2,7 @@
 
 Controller::Controller(ros::NodeHandle& nh, ros::NodeHandle& pnh)
 {
-    pubAck = nh.advertise<ackermann_msgs::AckermannDriveStamped>("/ackermann_cmd", 1);
+    pubAck = nh.advertise<ackermann_msgs::AckermannDriveStamped>("/ackermann_cmd_input", 1);
     subJoy = nh.subscribe("/joy", 1, &Controller::joyCallback, this);
 
     pnh.param<double>("accel", accel, 0.2);
