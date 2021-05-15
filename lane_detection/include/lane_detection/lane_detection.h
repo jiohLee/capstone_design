@@ -38,17 +38,19 @@ private:
     int leftHigh;
     int leftLow;
 
-    int redHMax1;
-    int redHMin1;
-    int redHMax2;
-    int redHMin2;
-    int yellowHMax;
-    int yellowHMin;
+    int whiteHueMax;
+    int whiteHueMin;
+    int whiteSatMax;
+    int whiteSatMin;
+    int whiteValMax;
+    int whiteValMin;
 
-    int satMax;
-    int satMin;
-    int valMax;
-    int valMin;
+    int yellowHueMax;
+    int yellowHueMin;
+    int yellowSatMax;
+    int yellowSatMin;
+    int yellowValMax;
+    int yellowValMin;
 
     int windowWidth;
     int windowNum;
@@ -81,14 +83,14 @@ private:
     // Variables
     Mat src;
     Mat topView;
-    Mat topViewBinRed;
+    Mat topViewBinWhite;
     Mat topViewBinYellow;
 
     std::vector<Point2f> srcTri;
     std::vector<Point2f> dstTri;
 
     std::vector<Point> centeroidsYellow;
-    std::vector<Point> centeroidsRed;
+    std::vector<Point> centeroidsWhite;
 
     ros::Time timePointPrev;
     double timePointElapsed;
