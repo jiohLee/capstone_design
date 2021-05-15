@@ -25,18 +25,27 @@ DecisionMaker::DecisionMaker(ros::NodeHandle & nh, ros::NodeHandle & pnh)
 void DecisionMaker::timerCallback(const ros::TimerEvent &)
 {
     // init values
+    double laneDet = 0;
+    if(lookAheadPoints.size() == 3)
+    {
+        geometry_msgs::Point lookAheadPoint = lookAheadPoints[1];
+        laneDet = std::atan2(lookAheadPoint.y, lookAheadPoint.x);
+    }
+
+
     velocity = targetVel;
     steer = targetSteer;
 
     // check lane type
     std::string laneTypeMsg = "UNKNOWN";
     double laneDur = ros::Time::now().toSec() - timePointLaneCheck.toSec();
-    if(std::abs(targetSteer) > curveThresholdSteer)
+    if(std::abs(laneDet) > curveThresholdSteer)
     {
         timePointLaneCheck = ros::Time::now();
         lane = LANE_CURVE;
         laneTypeMsg = "CURVE";
     }
+
     if(laneDur > curveThresholdTime)
     {
         lane = LANE_STRAIGHT;
@@ -49,7 +58,7 @@ void DecisionMaker::timerCallback(const ros::TimerEvent &)
         if(car)
         {
             ROS_INFO("CAR AHEAD");
-            if(carPoint.x < 0.7)
+            if(carPoint.x < 0.8)
             {
                 switchLane();
             }
@@ -107,7 +116,7 @@ void DecisionMaker::timerCallback(const ros::TimerEvent &)
     if(selectLookAheadPoint != 1) velocity = 0.4;
 
     // estop
-    if(isObstacleAhead(0, 0.5, onLane))
+    if(isObstacleAhead(0, 0.5, onLane) && static_cast<int>(onLane) == static_cast<int>(goLane))
     {
         velocity = 0;
     }
